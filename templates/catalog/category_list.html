@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load querystring %}
+
+{% block title %}{{ category.name }} — каталог{% endblock %}
+
+{% block content %}
+  <div class="row g-4">
+    <div class="col-12 col-lg-3">
+      <div class="p-3 bg-white border rounded-3 shadow-sm sticky-lg-top" style="top: 84px;">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div class="fw-semibold">Фильтры</div>
+          <a class="small text-decoration-none" href="{{ canonical_url }}">Сбросить</a>
+        </div>
+
+        <form method="get" class="vstack gap-3">
+          <div>
+            <label class="form-label small text-muted">Поиск</label>
+            <input class="form-control" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Название или ключевые слова">
+          </div>
+
+          <div>
+            <label class="form-label small text-muted">Тип развертывания</label>
+            <select class="form-select" name="deployment">
+              <option value="">Любой</option>
+              {% for v, label in deployment_choices %}
+                <option value="{{ v }}" {% if request.GET.deployment == v %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div>
+            <label class="form-label small text-muted">Размер бизнеса</label>
+            <select class="form-select" name="business_size">
+              <option value="">Любой</option>
+              {% for v, label in business_size_choices %}
+                <option value="{{ v }}" {% if request.GET.business_size == v %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="free_plan" value="1" id="free_plan" {% if request.GET.free_plan == "1" %}checked{% endif %}>
+            <label class="form-check-label" for="free_plan">Есть бесплатная версия</label>
+          </div>
+
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="trial" value="1" id="trial" {% if request.GET.trial == "1" %}checked{% endif %}>
+            <label class="form-check-label" for="trial">Есть пробный период</label>
+          </div>
+
+          <div>
+            <label class="form-label small text-muted">Рейтинг от</label>
+            <select class="form-select" name="rating_min">
+              <option value="">Любой</option>
+              <option value="4.5" {% if request.GET.rating_min == "4.5" %}selected{% endif %}>4.5+</option>
+              <option value="4.0" {% if request.GET.rating_min == "4.0" %}selected{% endif %}>4.0+</option>
+              <option value="3.5" {% if request.GET.rating_min == "3.5" %}selected{% endif %}>3.5+</option>
+            </select>
+            <div class="form-text">Это фильтр по сохранённому среднему рейтингу.</div>
+          </div>
+
+          <div>
+            <label class="form-label small text-muted">Интеграции</label>
+            <div class="filter-list">
+              {% for t in integrations %}
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="integration" value="{{ t.slug }}" id="int-{{ t.id }}" {% if t.slug in selected_integration %}checked{% endif %}>
+                  <label class="form-check-label" for="int-{{ t.id }}">{{ t.name }}</label>
+                </div>
+              {% empty %}
+                <div class="text-muted small">Пока нет тегов интеграций.</div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label small text-muted">Поддержка</label>
+            <div class="filter-list">
+              {% for t in supports %}
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="support" value="{{ t.slug }}" id="sup-{{ t.id }}" {% if t.slug in selected_support %}checked{% endif %}>
+                  <label class="form-check-label" for="sup-{{ t.id }}">{{ t.name }}</label>
+                </div>
+              {% empty %}
+                <div class="text-muted small">Пока нет тегов поддержки.</div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label small text-muted">Языки интерфейса</label>
+            <div class="filter-list">
+              {% for t in languages %}
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="language" value="{{ t.slug }}" id="lang-{{ t.id }}" {% if t.slug in selected_language %}checked{% endif %}>
+                  <label class="form-check-label" for="lang-{{ t.id }}">{{ t.name }}</label>
+                </div>
+              {% empty %}
+                <div class="text-muted small">Пока нет тегов языков.</div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label small text-muted">Сортировка</label>
+            <select class="form-select" name="sort">
+              <option value="">По умолчанию</option>
+              <option value="rating" {% if request.GET.sort == "rating" %}selected{% endif %}>По рейтингу</option>
+              <option value="name" {% if request.GET.sort == "name" %}selected{% endif %}>По названию</option>
+            </select>
+          </div>
+
+          <button class="btn btn-primary" type="submit">Применить</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-9">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+          <h1 class="h4 mb-1">{{ category.name }}</h1>
+          {% if category.description %}<div class="text-muted small">{{ category.description }}</div>{% endif %}
+        </div>
+        <div class="text-muted small">
+          {{ page_obj.paginator.count|intcomma }} сервис(ов)
+        </div>
+      </div>
+
+      {% if page_obj.object_list %}
+        <div class="row g-3">
+          {% for p in page_obj.object_list %}
+            <div class="col-12 col-md-6 col-xl-4">
+              <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                  <div class="d-flex gap-3 align-items-start">
+                    <div class="logo-box">
+                      {% if p.logo %}
+                        <img src="{{ p.logo.url }}" alt="{{ p.name }}" class="img-fluid rounded">
+                      {% else %}
+                        <div class="logo-placeholder rounded">{{ top.name|slice:":3" }}</div>
+                      {% endif %}
+                    </div>
+                    <div class="flex-grow-1">
+                      <a class="stretched-link text-decoration-none" href="{{ p.get_absolute_url }}"><strong>{{ p.name }}</strong></a>
+                      <div class="text-muted small mt-1">{{ p.short_description }}</div>
+                      <div class="mt-2 d-flex flex-wrap gap-1">
+                        {% if p.free_plan %}<span class="badge text-bg-success">free</span>{% endif %}
+                        {% if p.trial_available %}<span class="badge text-bg-info">trial</span>{% endif %}
+                        {% if p.deployment_type %}<span class="badge text-bg-light border">{{ p.get_deployment_type_display }}</span>{% endif %}
+                        {% if p.business_size %}<span class="badge text-bg-light border">{{ p.get_business_size_display|truncatechars:18 }}</span>{% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-footer bg-white border-0 pt-0">
+                  <div class="small text-muted">Рейтинг: {{ p.rating }}</div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        {% if page_obj.paginator.num_pages > 1 %}
+          <nav class="mt-4" aria-label="Pagination">
+            <ul class="pagination">
+              {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="{% querystring request page=page_obj.previous_page_number %}">Назад</a></li>
+              {% endif %}
+              <li class="page-item disabled"><span class="page-link">Стр. {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+              {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="{% querystring request page=page_obj.next_page_number %}">Вперёд</a></li>
+              {% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+      {% else %}
+        <div class="p-4 bg-white border rounded-3 shadow-sm text-muted">По выбранным фильтрам ничего не найдено.</div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}
+

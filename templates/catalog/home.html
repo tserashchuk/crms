@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Каталог CRM/CDP/ERP{% if q %} — поиск{% endif %}{% endblock %}
+
+{% block content %}
+  <div class="row g-4 align-items-start">
+    <div class="col-12 col-lg-5">
+      <div class="p-4 bg-white border rounded-3 shadow-sm">
+        <h1 class="h3 mb-2">Каталог CRM, CDP и ERP</h1>
+        <p class="text-muted mb-3">Выбирайте системы управления продажами, данными клиентов и бизнес‑процессами. Фильтры по развёртыванию, размеру бизнеса, интеграциям и поддержке.</p>
+
+        <div class="d-grid gap-2">
+          {% for c in top_categories %}
+            <a class="btn btn-primary btn-lg" href="{{ c.get_absolute_url }}">{{ c.name }}</a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-7">
+      <div class="p-4 bg-white border rounded-3 shadow-sm">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+          <h2 class="h5 mb-0">{% if q %}Результаты поиска{% else %}Новые/обновлённые сервисы{% endif %}</h2>
+          {% if q %}<a class="small text-decoration-none" href="{% url 'catalog:home' %}">Сбросить</a>{% endif %}
+        </div>
+
+        {% if latest %}
+          <div class="row g-3">
+            {% for p in latest %}
+              <div class="col-12 col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                  <div class="card-body">
+                    <div class="d-flex align-items-start gap-3">
+                      <div class="logo-box">
+                        {% if p.logo %}
+                          <img src="{{ p.logo.url }}" alt="{{ p.name }}" class="img-fluid rounded">
+                        {% else %}
+                          <div class="logo-placeholder rounded">CRM</div>
+                        {% endif %}
+                      </div>
+                      <div class="flex-grow-1">
+                        <div class="small text-muted">{{ p.get_top.name }}</div>
+                        <a class="stretched-link text-decoration-none" href="{{ p.get_absolute_url }}"><strong>{{ p.name }}</strong></a>
+                        <div class="text-muted small mt-1">{{ p.short_description }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-muted">Ничего не найдено.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

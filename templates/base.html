@@ -1,0 +1,65 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Каталог CRM/CDP/ERP{% endblock %}</title>
+    {% if canonical_url %}<link rel="canonical" href="{{ canonical_url }}"/>{% endif %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/site.css' %}">
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body class="bg-body-tertiary">
+    <nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top">
+      <div class="container">
+        <a class="navbar-brand fw-semibold" href="{% url 'catalog:home' %}">CRM Каталог</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-controls="navMain" aria-expanded="false" aria-label="Меню">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navMain">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            {% for c in TOP_CATEGORIES %}
+              <li class="nav-item">
+                <a class="nav-link" href="{{ c.get_absolute_url }}">{{ c.name }}</a>
+              </li>
+            {% endfor %}
+          </ul>
+          <form class="d-flex" role="search" action="{% url 'catalog:home' %}" method="get">
+            <input class="form-control me-2" type="search" name="q" placeholder="Поиск по каталогу" value="{{ request.GET.q|default:'' }}">
+            <button class="btn btn-outline-primary" type="submit">Найти</button>
+          </form>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container py-4">
+      {% if breadcrumbs %}
+        <nav aria-label="breadcrumb" class="mb-3">
+          <ol class="breadcrumb mb-0">
+            {% for name, url in breadcrumbs %}
+              {% if forloop.last %}
+                <li class="breadcrumb-item active" aria-current="page">{{ name }}</li>
+              {% else %}
+                <li class="breadcrumb-item"><a class="text-decoration-none" href="{{ url }}">{{ name }}</a></li>
+              {% endif %}
+            {% endfor %}
+          </ol>
+        </nav>
+      {% endif %}
+
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="border-top bg-white">
+      <div class="container py-4 d-flex flex-wrap gap-2 align-items-center justify-content-between">
+        <div class="text-muted small">© {% now "Y" %} Каталог CRM/CDP/ERP</div>
+        <div class="text-muted small">Django • Bootstrap</div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>
+
