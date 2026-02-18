@@ -1,0 +1,98 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block content %}
+  <div class="deepseek-fill-actions" style="margin-bottom: 1rem;">
+    <button type="button" id="deepseek-fill-btn" class="button">Заполнить через DeepSeek</button>
+    <span id="deepseek-fill-status" style="margin-left: 0.5rem; color: #666; font-size: 0.9em;"></span>
+  </div>
+  {{ block.super }}
+{% endblock %}
+
+{% block footer %}
+  {{ block.super }}
+  <script>
+(function() {
+  var btn = document.getElementById('deepseek-fill-btn');
+  var status = document.getElementById('deepseek-fill-status');
+  if (!btn || !status) return;
+
+  function getCsrfToken() {
+    var input = document.querySelector('input[name=csrfmiddlewaretoken]');
+    return input ? input.value : '';
+  }
+
+  function getCategoryHint() {
+    var sel = document.getElementById('id_category');
+    if (!sel || !sel.options[sel.selectedIndex]) return '';
+    return sel.options[sel.selectedIndex].text || '';
+  }
+
+  btn.addEventListener('click', function() {
+    var nameInput = document.getElementById('id_name');
+    var name = nameInput ? nameInput.value.trim() : '';
+    if (!name) {
+      status.textContent = 'Сначала введите название сервиса.';
+      status.style.color = '#ba2121';
+      return;
+    }
+
+    btn.disabled = true;
+    status.textContent = 'Запрос к DeepSeek…';
+    status.style.color = '#666';
+
+    var formData = new FormData();
+    formData.append('name', name);
+    formData.append('category_hint', getCategoryHint());
+    formData.append('csrfmiddlewaretoken', getCsrfToken());
+
+    fetch('{% url "admin:catalog_product_deepseek_fill" %}', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      credentials: 'same-origin'
+    })
+    .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+    .then(function(result) {
+      if (!result.ok && result.data && result.data.error) {
+        status.textContent = 'Ошибка: ' + result.data.error;
+        status.style.color = '#ba2121';
+        btn.disabled = false;
+        return;
+      }
+      var d = result.data;
+      function set(id, value) {
+        var el = document.getElementById(id);
+        if (el && value !== undefined && value !== null) {
+          if (el.type === 'checkbox') el.checked = !!value;
+          else el.value = value;
+        }
+      }
+      set('id_short_description', d.short_description || '');
+      set('id_website_url', d.website_url || '');
+      set('id_description', d.description || '');
+      set('id_key_features', d.key_features || '');
+      set('id_advantages', d.advantages || '');
+      set('id_disadvantages', d.disadvantages || '');
+      set('id_deployment_type', d.deployment_type || '');
+      set('id_business_size', d.business_size || '');
+      set('id_pricing_model', d.pricing_model || '');
+      set('id_pricing_details', d.pricing_details || '');
+      set('id_free_plan', d.free_plan);
+      set('id_trial_available', d.trial_available);
+      set('id_support_24_7', d.support_24_7);
+      status.textContent = 'Готово. Проверьте поля и сохраните.';
+      status.style.color = '#2e7d32';
+      btn.disabled = false;
+    })
+    .catch(function(err) {
+      status.textContent = 'Ошибка сети: ' + (err.message || 'неизвестно');
+      status.style.color = '#ba2121';
+      btn.disabled = false;
+    });
+  });
+})();
+  </script>
+{% endblock %}

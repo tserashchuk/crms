@@ -34,6 +34,12 @@ heroku config:set DEBUG=0
 heroku config:set ALLOWED_HOSTS=".herokuapp.com"
 ```
 
+Опционально (для кнопки «Заполнить через DeepSeek» в карточке сервиса):
+
+```bash
+heroku config:set DEEPSEEK_API_KEY="ваш-ключ-deepseek-api"
+```
+
 Сгенерировать SECRET_KEY (локально):
 
 ```bash

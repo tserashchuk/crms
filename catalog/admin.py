@@ -1,5 +1,11 @@
+from django.conf import settings
 from django.contrib import admin
+from django.http import JsonResponse
+from django.urls import path
+from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_http_methods
 
+from .deepseek import fetch_product_data
 from .models import Category, Product, Review, Tag
 
 
@@ -23,6 +29,8 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    change_form_template = "admin/catalog/product/change_form.html"
+
     list_display = (
         "name",
         "category",
@@ -49,6 +57,28 @@ class ProductAdmin(admin.ModelAdmin):
     filter_horizontal = ("tags",)
     ordering = ("sort_order", "name")
     readonly_fields = ("created_at", "updated_at")
+
+    def get_urls(self):
+        urls = super().get_urls()
+        extra = [
+            path(
+                "deepseek-fill/",
+                self.admin_site.admin_view(require_http_methods(["POST"])(self._deepseek_fill_view)),
+                name="catalog_product_deepseek_fill",
+            ),
+        ]
+        return extra + urls
+
+    def _deepseek_fill_view(self, request):
+        api_key = getattr(settings, "DEEPSEEK_API_KEY", None) or ""
+        if not api_key:
+            return JsonResponse({"error": "DEEPSEEK_API_KEY не задан."}, status=400)
+        name = (request.POST.get("name") or "").strip()
+        category_hint = (request.POST.get("category_hint") or "").strip()
+        result = fetch_product_data(name, api_key=api_key, category_hint=category_hint)
+        if "error" in result:
+            return JsonResponse({"error": result["error"]}, status=400)
+        return JsonResponse(result)
 
     fieldsets = (
         ("Основное", {"fields": ("name", "slug", "logo", "short_description", "category", "website_url", "is_published", "sort_order")}),

@@ -113,3 +113,6 @@ if not DEBUG:
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# DeepSeek API для кнопки «Заполнить через DeepSeek» в админке (карточка сервиса)
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "sk-60f290b22fb1480fb6d835e8edae783c")
+

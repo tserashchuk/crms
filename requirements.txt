@@ -1,5 +1,6 @@
 Django>=5.0,<6.0
 Pillow>=10.0,<12.0
+requests>=2.31,<3.0
 
 # Heroku / production
 gunicorn>=23.0,<24.0
