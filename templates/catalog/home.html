@@ -1,79 +1,147 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}Каталог CRM/CDP/ERP{% if q %} — поиск{% endif %}{% endblock %}
+{% block title %}Каталог CRM/CDP/ERP — Профессиональный выбор бизнес-систем{% if q %} | Поиск{% endif %}{% endblock %}
 
 {% block content %}
-  <!-- Hero -->
-  <section class="home-hero vuexy-card p-4 p-md-5 mb-4">
-    <div class="row align-items-center">
-      <div class="col-12 col-lg-7">
-        <h1 class="home-hero-title mb-3">Каталог CRM, CDP и ERP</h1>
-        <p class="home-hero-lead text-muted mb-0">
-          Выбирайте системы управления продажами, данными клиентов и бизнес‑процессами.
-          Фильтры по развёртыванию, размеру бизнеса, интеграциям и поддержке.
-        </p>
-      </div>
-      <div class="col-12 col-lg-5 mt-4 mt-lg-0 text-lg-end">
-        <a href="{% url 'catalog:home' %}?q=" class="btn btn-primary btn-lg px-4">
-          Все сервисы
-        </a>
+  <!-- Hero Section -->
+  <section class="mb-8">
+    <div class="card" style="background: linear-gradient(135deg, #EEF5FC 0%, #E0EAF3 100%); border: 1px solid #C1D6E7;">
+      <div class="card-body" style="padding: 3rem;">
+        <div class="row align-items-center">
+          <div class="col-lg-8">
+            <h1 style="font-size: 2.5rem; font-weight: 700; color: var(--gray-900); margin-bottom: 1rem; letter-spacing: -0.02em;">
+              Профессиональный каталог<br>
+              CRM, CDP и ERP систем
+            </h1>
+            <p style="font-size: 1.125rem; color: var(--gray-700); margin-bottom: 2rem; max-width: 600px;">
+              Сравнивайте возможности, читайте объективные отзывы и находите идеальное решение для вашего бизнеса
+            </p>
+            <div class="flex gap-3">
+              <a href="{% url 'catalog:home' %}?q=" class="btn btn-lg btn-primary">
+                Все решения
+              </a>
+              <a href="#categories" class="btn btn-lg btn-secondary">
+                Категории систем
+              </a>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div style="display: grid; gap: 1rem; padding: 1rem;">
+              <div class="card" style="padding: 1rem; border-color: var(--success);">
+                <div class="flex items-center gap-3">
+                  <img src="{% static 'images/icons/check.svg' %}" alt="" class="icon" style="color: var(--success);">
+                  <div>
+                    <div style="font-weight: 600; color: var(--gray-900);">Проверенные системы</div>
+                    <div class="text-muted text-sm">Только надежные решения</div>
+                  </div>
+                </div>
+              </div>
+              <div class="card" style="padding: 1rem; border-color: var(--info);">
+                <div class="flex items-center gap-3">
+                  <img src="{% static 'images/icons/star.svg' %}" alt="" class="icon" style="color: var(--info);">
+                  <div>
+                    <div style="font-weight: 600; color: var(--gray-900);">Реальные отзывы</div>
+                    <div class="text-muted text-sm">От бизнес-пользователей</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Разделы каталога -->
+  <!-- Categories -->
   {% if top_categories %}
-    <section class="home-categories mb-5">
-      <h2 class="home-section-title mb-3">Разделы каталога</h2>
-      <nav class="home-category-strip vuexy-card p-0" aria-label="Категории">
-        <ul class="home-category-list">
-          {% for c in top_categories %}
-            <li class="home-category-item">
-              <a href="{{ c.get_absolute_url }}" class="home-category-link">{{ c.name }}</a>
-            </li>
-          {% endfor %}
-        </ul>
-      </nav>
+    <section class="mb-8" id="categories">
+      <h2 class="mb-4" style="font-size: 1.5rem; font-weight: 600;">Категории систем</h2>
+      <div class="row g-3">
+        {% for c in top_categories %}
+          <div class="col-md-6 col-lg-4">
+            <a href="{{ c.get_absolute_url }}" class="card" style="text-decoration: none; height: 100%;">
+              <div class="card-body">
+                <div class="flex items-center gap-3 mb-3">
+                  <img src="{% static 'images/icons/building.svg' %}" alt="" class="icon" style="color: var(--primary-600);">
+                  <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--gray-900); margin: 0;">{{ c.name }}</h3>
+                </div>
+                {% if c.description %}
+                  <p class="text-muted text-sm mb-0">{{ c.description|truncatechars:120 }}</p>
+                {% endif %}
+              </div>
+            </a>
+          </div>
+        {% endfor %}
+      </div>
     </section>
   {% endif %}
 
-  <!-- Сервисы -->
-  <section class="home-services">
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
-      <h2 class="home-section-title mb-0">
-        {% if q %}Результаты поиска{% else %}Новые и обновлённые сервисы{% endif %}
-      </h2>
+  <!-- Latest Services -->
+  <section>
+    <div class="flex justify-between items-center mb-4">
+      <div>
+        <h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem;">
+          {% if q %}Результаты поиска{% else %}Новые и обновлённые системы{% endif %}
+        </h2>
+        <p class="text-muted text-sm mb-0">
+          {% if q %}Найдено по запросу "{{ q }}"{% else %}Последние обновления в каталоге{% endif %}
+        </p>
+      </div>
       {% if q %}
-        <a href="{% url 'catalog:home' %}" class="btn btn-sm btn-outline-primary">Сбросить поиск</a>
+        <a href="{% url 'catalog:home' %}" class="btn btn-sm btn-secondary">Сбросить</a>
       {% endif %}
     </div>
 
     {% if latest %}
       <div class="row g-3">
         {% for p in latest %}
-          <div class="col-12 col-md-6 col-xl-4">
-            <article class="card h-100 vuexy-style border home-service-card">
-              <div class="card-body d-flex align-items-start gap-3">
-                <div class="logo-box flex-shrink-0">
+          <div class="col-md-6 col-lg-4">
+            <div class="card product-card">
+              <div class="product-card-header">
+                <div class="product-logo">
                   {% if p.logo %}
-                    <img src="{{ p.logo.url }}" alt="{{ p.name }}" class="img-fluid rounded">
+                    <img src="{{ p.logo.url }}" alt="{{ p.name }}">
                   {% else %}
-                    <img src="https://ui-avatars.com/api/?name={{ p.name|urlencode }}&size=56&background=696cff&color=ffffff" alt="{{ p.name }}" class="img-fluid rounded logo-placeholder-img">
+                    <img src="https://ui-avatars.com/api/?name={{ p.name|urlencode }}&size=64&background=1560BD&color=ffffff&bold=true" alt="{{ p.name }}">
                   {% endif %}
                 </div>
-                <div class="flex-grow-1 min-w-0">
-                  <span class="d-block small text-muted mb-1">{{ p.get_top.name }}</span>
-                  <a class="stretched-link text-decoration-none fw-semibold text-dark" href="{{ p.get_absolute_url }}">{{ p.name }}</a>
-                  <p class="text-muted small mt-1 mb-0 line-clamp-2">{{ p.short_description }}</p>
+                <div class="product-info">
+                  <div class="product-category">{{ p.get_top.name }}</div>
+                  <a href="{{ p.get_absolute_url }}" class="product-name">{{ p.name }}</a>
+                  <p class="product-description">{{ p.short_description }}</p>
+                  <div class="flex gap-2" style="flex-wrap: wrap;">
+                    {% if p.free_plan %}<span class="badge badge-success">FREE</span>{% endif %}
+                    {% if p.trial_available %}<span class="badge badge-info">TRIAL</span>{% endif %}
+                  </div>
                 </div>
               </div>
-            </article>
+              <div class="product-meta">
+                {% if p.rating > 0 %}
+                  <div class="product-rating">
+                    {% for i in "12345" %}
+                      <span class="rating-star {% if forloop.counter > p.rating %}empty{% endif %}">★</span>
+                    {% endfor %}
+                    <span style="margin-left: 0.25rem;">{{ p.rating }}</span>
+                  </div>
+                {% endif %}
+                <div style="margin-left: auto;">
+                  <button class="btn btn-sm btn-secondary" style="padding: 0.25rem 0.75rem;">
+                    <img src="{% static 'images/icons/bookmark.svg' %}" alt="" class="icon icon-sm">
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         {% endfor %}
       </div>
     {% else %}
-      <div class="vuexy-card p-5 text-center text-muted">
-        <p class="mb-0">По вашему запросу ничего не найдено. Попробуйте изменить поиск или откройте раздел каталога.</p>
+      <div class="card">
+        <div class="card-body" style="padding: 3rem; text-align: center;">
+          <img src="{% static 'images/icons/search.svg' %}" alt="" class="icon" style="width: 48px; height: 48px; color: var(--gray-400); margin-bottom: 1rem;">
+          <p class="text-muted mb-3">По вашему запросу ничего не найдено</p>
+          <p class="text-muted text-sm mb-0">Попробуйте изменить поисковый запрос или выберите категорию</p>
+        </div>
       </div>
     {% endif %}
   </section>

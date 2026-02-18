@@ -1,186 +1,230 @@
 {% extends "base.html" %}
 {% load humanize %}
+{% load static %}
 
 {% block title %}{{ product.name }} — {{ top.name }}{% endblock %}
 
 {% block content %}
   <div class="row g-4">
-    <div class="col-12 col-lg-8">
-      <div class="vuexy-card p-4">
-        <div class="d-flex gap-3 align-items-start">
-          <div class="logo-box logo-box-lg">
-            {% if product.logo %}
-              <img src="{{ product.logo.url }}" alt="{{ product.name }}" class="img-fluid rounded">
-            {% else %}
-              <img src="https://ui-avatars.com/api/?name={{ product.name|urlencode }}&size=80&background=696cff&color=ffffff" alt="{{ product.name }}" class="img-fluid rounded logo-placeholder-img">
-            {% endif %}
-          </div>
-          <div class="flex-grow-1">
-            <h1 class="h3 mb-1">{{ product.name }}</h1>
-            <div class="text-muted">{{ product.short_description }}</div>
-            <div class="mt-3 d-flex flex-wrap gap-2">
-              {% if product.website_url %}
-                <a class="btn btn-primary" href="{{ product.website_url }}" target="_blank" rel="noopener">Официальный сайт</a>
+    <!-- Main Content -->
+    <div class="col-lg-8">
+      <!-- Product Header -->
+      <div class="card mb-4">
+        <div class="card-body" style="padding: 2rem;">
+          <div class="flex gap-4 mb-4" style="align-items: start;">
+            <div class="product-logo" style="width: 80px; height: 80px;">
+              {% if product.logo %}
+                <img src="{{ product.logo.url }}" alt="{{ product.name }}">
+              {% else %}
+                <img src="https://ui-avatars.com/api/?name={{ product.name|urlencode }}&size=80&background=1560BD&color=ffffff&bold=true" alt="{{ product.name }}">
               {% endif %}
-              <a class="btn btn-outline-secondary" href="{{ top.get_absolute_url }}">Все {{ top.name }}</a>
             </div>
-            <div class="mt-3 d-flex flex-wrap gap-1">
-              {% if product.free_plan %}<span class="badge text-bg-success">бесплатная версия</span>{% endif %}
-              {% if product.trial_available %}<span class="badge text-bg-info">пробный период</span>{% endif %}
-              {% if product.deployment_type %}<span class="badge text-bg-light border">{{ product.get_deployment_type_display }}</span>{% endif %}
-              {% if product.business_size %}<span class="badge text-bg-light border">{{ product.get_business_size_display }}</span>{% endif %}
-              {% if product.support_24_7 %}<span class="badge text-bg-light border">поддержка 24/7</span>{% endif %}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="mt-4 vuexy-card p-4">
-        <h2 class="h5">Описание</h2>
-        {% if product.description %}
-          <div class="prose">{{ product.description|linebreaksbr }}</div>
-        {% else %}
-          <div class="text-muted">Описание пока не заполнено.</div>
-        {% endif %}
-      </div>
-
-      <div class="mt-4 row g-3">
-        <div class="col-12 col-md-6">
-          <div class="vuexy-card p-4 h-100">
-            <h2 class="h6">Ключевые функции/модули</h2>
-            {% if product.key_features %}
-              <ul class="mb-0">
-                {% for line in product.key_features.splitlines %}
-                  {% if line %}<li>{{ line }}</li>{% endif %}
-                {% endfor %}
-              </ul>
-            {% else %}
-              <div class="text-muted">Не указано.</div>
-            {% endif %}
-          </div>
-        </div>
-        <div class="col-12 col-md-6">
-          <div class="vuexy-card p-4 h-100">
-            <h2 class="h6">Преимущества</h2>
-            {% if product.advantages %}
-              <div>{{ product.advantages }}</div>
-            {% else %}
-              <div class="text-muted">Не указано.</div>
-            {% endif %}
-
-            {% if product.disadvantages %}
-              <hr class="my-3">
-              <h3 class="h6">Ограничения</h3>
-              <div class="text-muted">{{ product.disadvantages|linebreaksbr }}</div>
-            {% endif %}
-          </div>
-        </div>
-      </div>
-
-      <div class="mt-4 vuexy-card p-4">
-        <h2 class="h5">Отзывы</h2>
-        <div id="reviews"></div>
-
-        {% if published_reviews %}
-          <div class="vstack gap-3 mt-3">
-            {% for r in published_reviews %}
-              <div class="p-3 border rounded-3">
-                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                  <strong>{{ r.author_name }}</strong>
-                  <span class="badge text-bg-light border">{{ r.rating }}★</span>
+            <div style="flex: 1;">
+              <div class="product-category" style="margin-bottom: 0.5rem;">{{ top.name }}</div>
+              <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.75rem;">{{ product.name }}</h1>
+              
+              {% if product.rating > 0 %}
+                <div class="product-rating mb-3" style="font-size: 1rem;">
+                  {% for i in "12345" %}
+                    <span class="rating-star {% if forloop.counter > product.rating %}empty{% endif %}">★</span>
+                  {% endfor %}
+                  <span style="margin-left: 0.5rem; color: var(--gray-700);">{{ product.rating }} ({{ product.reviews_count|intcomma }} отзывов)</span>
                 </div>
-                <div class="text-muted small mt-1">{{ r.created_at|date:"d.m.Y" }}</div>
-                <div class="mt-2">{{ r.text|linebreaksbr }}</div>
-              </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="text-muted mt-2">Пока нет опубликованных отзывов.</div>
-        {% endif %}
+              {% endif %}
 
-        <hr class="my-4">
-        <h3 class="h6">Оставить отзыв</h3>
-        <form method="post" class="mt-2 vstack gap-2">
-          {% csrf_token %}
-          {{ review_form.website }}
-          <div class="row g-2">
-            <div class="col-12 col-md-6">
-              <label class="form-label small text-muted">Имя</label>
-              {{ review_form.author_name }}
-            </div>
-            <div class="col-12 col-md-6">
-              <label class="form-label small text-muted">Оценка (1–5)</label>
-              {{ review_form.rating }}
+              <p style="font-size: 1.125rem; color: var(--gray-700); margin-bottom: 1.5rem;">{{ product.short_description }}</p>
+              
+              <div class="flex gap-2 mb-3" style="flex-wrap: wrap;">
+                {% if product.website_url %}
+                  <a href="{{ product.website_url }}" target="_blank" rel="noopener" class="btn btn-primary">
+                    Официальный сайт
+                    <img src="{% static 'images/icons/external-link.svg' %}" alt="" class="icon icon-sm">
+                  </a>
+                {% endif %}
+                <button class="btn btn-secondary">
+                  <img src="{% static 'images/icons/bookmark.svg' %}" alt="" class="icon icon-sm">
+                  Сохранить
+                </button>
+                <button class="btn btn-secondary">
+                  <img src="{% static 'images/icons/compare.svg' %}" alt="" class="icon icon-sm">
+                  Сравнить
+                </button>
+                <button class="btn btn-secondary">
+                  <img src="{% static 'images/icons/share.svg' %}" alt="" class="icon icon-sm">
+                  Поделиться
+                </button>
+              </div>
+
+              <div class="flex gap-2" style="flex-wrap: wrap;">
+                {% if product.free_plan %}<span class="badge badge-success">Бесплатная версия</span>{% endif %}
+                {% if product.trial_available %}<span class="badge badge-info">Пробный период</span>{% endif %}
+                {% if product.deployment_type %}<span class="badge badge-neutral">{{ product.get_deployment_type_display }}</span>{% endif %}
+                {% if product.business_size %}<span class="badge badge-neutral">{{ product.get_business_size_display }}</span>{% endif %}
+                {% if product.support_24_7 %}<span class="badge badge-neutral">Поддержка 24/7</span>{% endif %}
+              </div>
             </div>
           </div>
-          <div>
-            <label class="form-label small text-muted">Текст</label>
-            {{ review_form.text }}
-          </div>
-          {% if review_form.errors %}
-            <div class="alert alert-danger py-2 my-2">
-              Пожалуйста, исправьте ошибки формы.
-            </div>
+        </div>
+      </div>
+
+      <!-- Description & Features -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="card-title">Описание</h2>
+        </div>
+        <div class="card-body">
+          {% if product.description %}
+            <div style="line-height: 1.7;">{{ product.description|linebreaksbr }}</div>
+          {% else %}
+            <p class="text-muted mb-0">Описание пока не заполнено.</p>
           {% endif %}
-          <button class="btn btn-primary" type="submit">Отправить</button>
-          <div class="form-text">Отзыв появится после модерации.</div>
-        </form>
+        </div>
+      </div>
+
+      {% if product.key_features %}
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="card-title">Ключевые функции</h2>
+        </div>
+        <div class="card-body">
+          <ul style="margin: 0; padding-left: 1.5rem;">
+            {% for line in product.key_features.splitlines %}
+              {% if line %}<li style="margin-bottom: 0.5rem;">{{ line }}</li>{% endif %}
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Reviews -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Отзывы пользователей</h2>
+        </div>
+        <div class="card-body">
+          {% if published_reviews %}
+            <div style="display: grid; gap: 1rem; margin-bottom: 2rem;">
+              {% for r in published_reviews %}
+                <div style="padding: 1rem; border: 1px solid var(--gray-300); border-radius: var(--radius-base);">
+                  <div class="flex justify-between items-center mb-2">
+                    <strong>{{ r.author_name }}</strong>
+                    <div class="product-rating">
+                      {% for i in "12345" %}
+                        <span class="rating-star {% if forloop.counter > r.rating %}empty{% endif %}">★</span>
+                      {% endfor %}
+                    </div>
+                  </div>
+                  <div class="text-muted text-sm mb-2">{{ r.created_at|date:"d.m.Y" }}</div>
+                  <div>{{ r.text|linebreaksbr }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted mb-3">Пока нет опубликованных отзывов.</p>
+          {% endif %}
+
+          <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Оставить отзыв</h3>
+          <form method="post">
+            {% csrf_token %}
+            {{ review_form.website }}
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Имя</label>
+                {{ review_form.author_name }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Оценка (1–5)</label>
+                {{ review_form.rating }}
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Текст отзыва</label>
+              {{ review_form.text }}
+            </div>
+            {% if review_form.errors %}
+              <div style="padding: 0.75rem; background: var(--danger-light); border: 1px solid var(--danger); border-radius: var(--radius-base); margin-bottom: 1rem;">
+                <p class="text-sm mb-0" style="color: var(--danger);">Пожалуйста, исправьте ошибки формы.</p>
+              </div>
+            {% endif %}
+            <button type="submit" class="btn btn-primary">Отправить отзыв</button>
+            <p class="text-muted text-sm" style="margin-top: 0.5rem;">Отзыв появится после модерации администратором.</p>
+          </form>
+        </div>
       </div>
     </div>
 
-    <div class="col-12 col-lg-4">
-      <div class="vuexy-card p-3">
-        <div class="fw-semibold mb-2">Характеристики</div>
-        <div class="small text-muted">Категория</div>
-        <div class="mb-2">{{ product.category.name }}</div>
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <div class="card sticky" style="top: 88px;">
+        <div class="card-header">
+          <h3 class="card-title">Характеристики</h3>
+        </div>
+        <div class="card-body">
+          <div style="display: grid; gap: 1.5rem;">
+            <div>
+              <div class="text-muted text-sm mb-1">Категория</div>
+              <div>
+                <a href="{{ product.category.get_absolute_url }}">{{ product.category.name }}</a>
+              </div>
+            </div>
 
-        <div class="small text-muted">Рейтинг</div>
-        <div class="mb-2">{{ product.rating }} ({{ product.reviews_count|intcomma }} отзывов)</div>
+            {% if product.pricing_model or product.pricing_details %}
+              <div>
+                <div class="text-muted text-sm mb-1">Ценообразование</div>
+                <div>
+                  {% if product.pricing_model %}<div class="font-medium">{{ product.get_pricing_model_display }}</div>{% endif %}
+                  {% if product.pricing_details %}<div class="text-muted text-sm">{{ product.pricing_details }}</div>{% endif %}
+                </div>
+              </div>
+            {% endif %}
 
-        {% if product.pricing_model or product.pricing_details %}
-          <div class="small text-muted">Цены</div>
-          <div class="mb-2">
-            {% if product.pricing_model %}{{ product.get_pricing_model_display }}{% endif %}
-            {% if product.pricing_details %}<div class="text-muted small">{{ product.pricing_details }}</div>{% endif %}
+            {% if product.updated_info_at %}
+              <div>
+                <div class="text-muted text-sm mb-1">Последнее обновление</div>
+                <div>{{ product.updated_info_at|date:"d.m.Y" }}</div>
+              </div>
+            {% endif %}
+
+            {% if integration_tags %}
+              <div>
+                <div class="text-muted text-sm mb-2">Интеграции</div>
+                <div class="flex gap-2" style="flex-wrap: wrap;">
+                  {% for t in integration_tags %}
+                    <span class="badge badge-neutral">{{ t.name }}</span>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+
+            {% if support_tags %}
+              <div>
+                <div class="text-muted text-sm mb-2">Поддержка</div>
+                <div class="flex gap-2" style="flex-wrap: wrap;">
+                  {% for t in support_tags %}
+                    <span class="badge badge-neutral">{{ t.name }}</span>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+
+            {% if language_tags %}
+              <div>
+                <div class="text-muted text-sm mb-2">Языки интерфейса</div>
+                <div class="flex gap-2" style="flex-wrap: wrap;">
+                  {% for t in language_tags %}
+                    <span class="badge badge-neutral">{{ t.name }}</span>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
           </div>
-        {% endif %}
-
-        {% if product.updated_info_at %}
-          <div class="small text-muted">Информация обновлена</div>
-          <div class="mb-2">{{ product.updated_info_at|date:"d.m.Y" }}</div>
-        {% endif %}
-
-        {% if integration_tags %}
-          <hr class="my-3">
-          <div class="fw-semibold mb-2">Интеграции</div>
-          <div class="d-flex flex-wrap gap-1">
-            {% for t in integration_tags %}
-              <span class="badge text-bg-light border">{{ t.name }}</span>
-            {% endfor %}
-          </div>
-        {% endif %}
-
-        {% if support_tags %}
-          <hr class="my-3">
-          <div class="fw-semibold mb-2">Поддержка</div>
-          <div class="d-flex flex-wrap gap-1">
-            {% for t in support_tags %}
-              <span class="badge text-bg-light border">{{ t.name }}</span>
-            {% endfor %}
-          </div>
-        {% endif %}
-
-        {% if language_tags %}
-          <hr class="my-3">
-          <div class="fw-semibold mb-2">Языки</div>
-          <div class="d-flex flex-wrap gap-1">
-            {% for t in language_tags %}
-              <span class="badge text-bg-light border">{{ t.name }}</span>
-            {% endfor %}
-          </div>
-        {% endif %}
+        </div>
+        <div class="card-footer">
+          <a href="{{ top.get_absolute_url }}" class="btn btn-secondary" style="width: 100%;">
+            Все {{ top.name }}
+          </a>
+        </div>
       </div>
     </div>
   </div>
 {% endblock %}
-
