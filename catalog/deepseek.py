@@ -15,7 +15,10 @@ SYSTEM_PROMPT = """Ты — помощник по заполнению карт�
 По названию сервиса верни JSON со следующими полями (все тексты на русском, только значения полей):
 - short_description: краткое описание или слоган, до 300 символов
 - website_url: официальный сайт (URL или пустая строка)
+- documentation_url: ссылка на документацию (URL или пустая строка)
+- support_url: ссылка на раздел поддержки (URL или пустая строка)
 - description: полное описание сервиса, 2–5 предложений
+- extended_description: расширенное описание (подробный текст, возможности, сценарии использования), можно несколько абзацев, суммарный объем около 1000 символов
 - key_features: ключевые функции/модули, по одной на строку (многострочная строка)
 - advantages: преимущества, до 300 символов
 - disadvantages: недостатки или ограничения (строка, можно пусто)
@@ -51,7 +54,7 @@ def fetch_product_data(name: str, *, api_key: str, category_hint: str = "") -> d
             {"role": "user", "content": prompt},
         ],
         "temperature": 0.3,
-        "max_tokens": 2000,
+        "max_tokens": 3500,
         "response_format": {"type": "json_object"},
     }
     headers = {
@@ -88,7 +91,10 @@ def fetch_product_data(name: str, *, api_key: str, category_hint: str = "") -> d
     str_fields = (
         "short_description",
         "website_url",
+        "documentation_url",
+        "support_url",
         "description",
+        "extended_description",
         "key_features",
         "advantages",
         "disadvantages",

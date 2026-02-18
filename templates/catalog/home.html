@@ -2,15 +2,17 @@
 {% load static %}
 
 {% block title %}Каталог CRM/CDP/ERP — Профессиональный выбор бизнес-систем{% if q %} | Поиск{% endif %}{% endblock %}
+{% block og_title %}Каталог CRM/CDP/ERP — Профессиональный выбор бизнес-систем{% if q %} | Поиск{% endif %}{% endblock %}
+{% block twitter_title %}Каталог CRM/CDP/ERP — Профессиональный выбор бизнес-систем{% if q %} | Поиск{% endif %}{% endblock %}
 
 {% block content %}
   <!-- Hero Section -->
-  <section class="mb-8">
+  <section class="mb-8" aria-labelledby="hero-heading">
     <div class="card" style="background: linear-gradient(135deg, #EEF5FC 0%, #E0EAF3 100%); border: 1px solid #C1D6E7;">
       <div class="card-body" style="padding: 3rem;">
         <div class="row align-items-center">
           <div class="col-lg-8">
-            <h1 style="font-size: 2.5rem; font-weight: 700; color: var(--gray-900); margin-bottom: 1rem; letter-spacing: -0.02em;">
+            <h1 id="hero-heading" style="font-size: 2.5rem; font-weight: 700; color: var(--gray-900); margin-bottom: 1rem; letter-spacing: -0.02em;">
               Профессиональный каталог<br>
               CRM, CDP и ERP систем
             </h1>
@@ -94,9 +96,13 @@
     </div>
 
     {% if latest %}
-      <div class="row g-3">
+      <div class="row g-3" itemscope itemtype="https://schema.org/ItemList">
+        <meta itemprop="name" content="{% if q %}Результаты поиска{% else %}Новые и обновлённые системы{% endif %}">
+        <meta itemprop="numberOfItems" content="{{ latest|length }}">
         {% for p in latest %}
-          <div class="col-md-6 col-lg-4">
+          <div class="col-md-6 col-lg-4" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+            <meta itemprop="position" content="{{ forloop.counter }}">
+            <meta itemprop="url" content="{{ request.scheme }}://{{ request.get_host }}{{ p.get_absolute_url }}">
             <div class="card product-card">
               <div class="product-card-header">
                 <div class="product-logo">
@@ -108,8 +114,8 @@
                 </div>
                 <div class="product-info">
                   <div class="product-category">{{ p.get_top.name }}</div>
-                  <a href="{{ p.get_absolute_url }}" class="product-name">{{ p.name }}</a>
-                  <p class="product-description">{{ p.short_description }}</p>
+                  <a href="{{ p.get_absolute_url }}" class="product-name" itemprop="name">{{ p.name }}</a>
+                  <p class="product-description" itemprop="description">{{ p.short_description }}</p>
                   <div class="flex gap-2" style="flex-wrap: wrap;">
                     {% if p.free_plan %}<span class="badge badge-success">FREE</span>{% endif %}
                     {% if p.trial_available %}<span class="badge badge-info">TRIAL</span>{% endif %}
@@ -125,10 +131,21 @@
                     <span style="margin-left: 0.25rem;">{{ p.rating }}</span>
                   </div>
                 {% endif %}
-                <div style="margin-left: auto;">
-                  <button class="btn btn-sm btn-secondary" style="padding: 0.25rem 0.75rem;">
-                    <img src="{% static 'images/icons/bookmark.svg' %}" alt="" class="icon icon-sm">
-                  </button>
+                <div class="flex gap-2" style="margin-left: auto;">
+                  <form method="post" action="{% url 'catalog:toggle_saved' p.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="btn btn-sm {% if p.id in saved_product_ids %}btn-primary{% else %}btn-secondary{% endif %}" style="padding: 0.25rem 0.75rem;" title="{% if p.id in saved_product_ids %}Убрать из сохранённых{% else %}Сохранить{% endif %}">
+                      <img src="{% static 'images/icons/bookmark.svg' %}" alt="" class="icon icon-sm">
+                    </button>
+                  </form>
+                  <form method="post" action="{% url 'catalog:toggle_compare' p.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="btn btn-sm {% if p.id in compare_product_ids %}btn-primary{% else %}btn-secondary{% endif %}" style="padding: 0.25rem 0.75rem;" title="{% if p.id in compare_product_ids %}Убрать из сравнения{% else %}Сравнить{% endif %}" {% if p.id not in compare_product_ids and compare_count >= max_compare %}disabled title="Добавлено максимум ({{ max_compare }}). Уберите одну на странице сравнения."{% endif %}>
+                      <img src="{% static 'images/icons/compare.svg' %}" alt="" class="icon icon-sm">
+                    </button>
+                  </form>
                 </div>
               </div>
             </div>
@@ -142,6 +159,12 @@
           <p class="text-muted mb-3">По вашему запросу ничего не найдено</p>
           <p class="text-muted text-sm mb-0">Попробуйте изменить поисковый запрос или выберите категорию</p>
         </div>
+      </div>
+    {% endif %}
+
+    {% if popular_products and not q %}
+      <div class="mt-6">
+        {% include "catalog/includes/popular_products_card.html" with popular_products=popular_products title="Популярные сервисы" %}
       </div>
     {% endif %}
   </section>

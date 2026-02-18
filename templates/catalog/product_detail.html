@@ -3,28 +3,41 @@
 {% load static %}
 
 {% block title %}{{ product.name }} — {{ top.name }}{% endblock %}
+{% block og_title %}{{ product.name }} — {{ top.name }}{% endblock %}
+{% block twitter_title %}{{ product.name }} — {{ top.name }}{% endblock %}
+{% block og_description %}{{ product.short_description|default:meta_description|truncatewords:25 }}{% endblock %}
+{% block twitter_description %}{{ product.short_description|default:meta_description|truncatewords:25 }}{% endblock %}
+{% block og_image %}{% if product.logo %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.logo.url }}">{% endif %}{% endblock %}
+{% block twitter_image %}{% if product.logo %}<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.logo.url }}">{% endif %}{% endblock %}
 
 {% block content %}
   <div class="row g-4">
     <!-- Main Content -->
     <div class="col-lg-8">
       <!-- Product Header -->
-      <div class="card mb-4">
+      <div class="card mb-4" itemscope itemtype="https://schema.org/SoftwareApplication">
+        <link itemprop="url" href="{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}">
+        <link itemprop="applicationCategory" href="https://schema.org/BusinessApplication">
+        <meta itemprop="operatingSystem" content="Web">
         <div class="card-body" style="padding: 2rem;">
           <div class="flex gap-4 mb-4" style="align-items: start;">
             <div class="product-logo" style="width: 80px; height: 80px;">
               {% if product.logo %}
-                <img src="{{ product.logo.url }}" alt="{{ product.name }}">
+                <img src="{{ product.logo.url }}" alt="{{ product.name }}" itemprop="image">
               {% else %}
-                <img src="https://ui-avatars.com/api/?name={{ product.name|urlencode }}&size=80&background=1560BD&color=ffffff&bold=true" alt="{{ product.name }}">
+                <img src="https://ui-avatars.com/api/?name={{ product.name|urlencode }}&size=80&background=1560BD&color=ffffff&bold=true" alt="{{ product.name }}" itemprop="image">
               {% endif %}
             </div>
             <div style="flex: 1;">
               <div class="product-category" style="margin-bottom: 0.5rem;">{{ top.name }}</div>
-              <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.75rem;">{{ product.name }}</h1>
+              <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.75rem;" itemprop="name">{{ product.name }}</h1>
               
               {% if product.rating > 0 %}
-                <div class="product-rating mb-3" style="font-size: 1rem;">
+                <div class="product-rating mb-3" style="font-size: 1rem;" itemprop="aggregateRating" itemscope itemtype="https://schema.org/AggregateRating">
+                  <meta itemprop="ratingValue" content="{{ product.rating }}">
+                  <meta itemprop="ratingCount" content="{{ product.reviews_count|default:0 }}">
+                  <meta itemprop="bestRating" content="5">
+                  <meta itemprop="worstRating" content="1">
                   {% for i in "12345" %}
                     <span class="rating-star {% if forloop.counter > product.rating %}empty{% endif %}">★</span>
                   {% endfor %}
@@ -32,23 +45,37 @@
                 </div>
               {% endif %}
 
-              <p style="font-size: 1.125rem; color: var(--gray-700); margin-bottom: 1.5rem;">{{ product.short_description }}</p>
+              <p style="font-size: 1.125rem; color: var(--gray-700); margin-bottom: 1.5rem;" itemprop="description">{{ product.short_description }}</p>
               
               <div class="flex gap-2 mb-3" style="flex-wrap: wrap;">
                 {% if product.website_url %}
-                  <a href="{{ product.website_url }}" target="_blank" rel="noopener" class="btn btn-primary">
+                  <a href="{{ product.website_url }}" target="_blank" rel="noopener" class="btn btn-primary" itemprop="url">
                     Официальный сайт
                     <img src="{% static 'images/icons/external-link.svg' %}" alt="" class="icon icon-sm">
                   </a>
                 {% endif %}
-                <button class="btn btn-secondary">
-                  <img src="{% static 'images/icons/bookmark.svg' %}" alt="" class="icon icon-sm">
-                  Сохранить
-                </button>
-                <button class="btn btn-secondary">
-                  <img src="{% static 'images/icons/compare.svg' %}" alt="" class="icon icon-sm">
-                  Сравнить
-                </button>
+                {% if product.documentation_url %}
+                  <a href="{{ product.documentation_url }}" target="_blank" rel="noopener" class="btn btn-secondary">Документация</a>
+                {% endif %}
+                {% if product.support_url %}
+                  <a href="{{ product.support_url }}" target="_blank" rel="noopener" class="btn btn-secondary">Поддержка</a>
+                {% endif %}
+                <form method="post" action="{% url 'catalog:toggle_saved' product.id %}" style="display: inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <button type="submit" class="btn {% if product_in_saved %}btn-primary{% else %}btn-secondary{% endif %}" title="{% if product_in_saved %}Убрать из сохранённых{% else %}Сохранить в избранное{% endif %}">
+                    <img src="{% static 'images/icons/bookmark.svg' %}" alt="" class="icon icon-sm">
+                    {% if product_in_saved %}В сохранённых{% else %}Сохранить{% endif %}
+                  </button>
+                </form>
+                <form method="post" action="{% url 'catalog:toggle_compare' product.id %}" style="display: inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <button type="submit" class="btn {% if product_in_compare %}btn-primary{% else %}btn-secondary{% endif %}" title="{% if product_in_compare %}Убрать из сравнения{% else %}Добавить к сравнению{% endif %}" {% if not product_in_compare and compare_count >= max_compare %}disabled title="Добавлено максимум систем ({{ max_compare }}). Уберите одну на странице сравнения."{% endif %}>
+                    <img src="{% static 'images/icons/compare.svg' %}" alt="" class="icon icon-sm">
+                    {% if product_in_compare %}В сравнении{% else %}Сравнить{% endif %}
+                  </button>
+                </form>
                 <button class="btn btn-secondary">
                   <img src="{% static 'images/icons/share.svg' %}" alt="" class="icon icon-sm">
                   Поделиться
@@ -81,6 +108,17 @@
         </div>
       </div>
 
+      {% if product.extended_description %}
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="card-title">Расширенное описание</h2>
+        </div>
+        <div class="card-body">
+          <div style="line-height: 1.7;">{{ product.extended_description|linebreaksbr }}</div>
+        </div>
+      </div>
+      {% endif %}
+
       {% if product.key_features %}
       <div class="card mb-4">
         <div class="card-header">
@@ -96,6 +134,30 @@
       </div>
       {% endif %}
 
+      {% if tags_by_group %}
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="card-title">Теги</h2>
+        </div>
+        <div class="card-body">
+          <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+            {% for group_label, tags in tags_by_group %}
+              <div>
+                <div class="text-muted text-sm mb-1">{{ group_label }}</div>
+                <div class="flex gap-2" style="flex-wrap: wrap;">
+                  {% for t in tags %}
+                    <span class="badge badge-neutral">{{ t.name }}</span>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% include "catalog/includes/popular_products_card.html" with popular_products=popular_products title="Популярные сервисы" %}
+
       <!-- Reviews -->
       <div class="card">
         <div class="card-header">
@@ -105,17 +167,20 @@
           {% if published_reviews %}
             <div style="display: grid; gap: 1rem; margin-bottom: 2rem;">
               {% for r in published_reviews %}
-                <div style="padding: 1rem; border: 1px solid var(--gray-300); border-radius: var(--radius-base);">
+                <div style="padding: 1rem; border: 1px solid var(--gray-300); border-radius: var(--radius-base);" itemscope itemtype="https://schema.org/Review">
                   <div class="flex justify-between items-center mb-2">
-                    <strong>{{ r.author_name }}</strong>
-                    <div class="product-rating">
+                    <strong itemprop="author" itemscope itemtype="https://schema.org/Person"><span itemprop="name">{{ r.author_name }}</span></strong>
+                    <div class="product-rating" itemprop="reviewRating" itemscope itemtype="https://schema.org/Rating">
+                      <meta itemprop="ratingValue" content="{{ r.rating }}">
+                      <meta itemprop="bestRating" content="5">
+                      <meta itemprop="worstRating" content="1">
                       {% for i in "12345" %}
                         <span class="rating-star {% if forloop.counter > r.rating %}empty{% endif %}">★</span>
                       {% endfor %}
                     </div>
                   </div>
-                  <div class="text-muted text-sm mb-2">{{ r.created_at|date:"d.m.Y" }}</div>
-                  <div>{{ r.text|linebreaksbr }}</div>
+                  <div class="text-muted text-sm mb-2">{% if r.created_at %}<time itemprop="datePublished" datetime="{{ r.created_at|date:'c' }}">{{ r.created_at|date:"d.m.Y" }}</time>{% endif %}</div>
+                  <div itemprop="reviewBody">{{ r.text|linebreaksbr }}</div>
                 </div>
               {% endfor %}
             </div>
@@ -185,34 +250,19 @@
               </div>
             {% endif %}
 
-            {% if integration_tags %}
+            {% if tags_by_group %}
               <div>
-                <div class="text-muted text-sm mb-2">Интеграции</div>
-                <div class="flex gap-2" style="flex-wrap: wrap;">
-                  {% for t in integration_tags %}
-                    <span class="badge badge-neutral">{{ t.name }}</span>
-                  {% endfor %}
-                </div>
-              </div>
-            {% endif %}
-
-            {% if support_tags %}
-              <div>
-                <div class="text-muted text-sm mb-2">Поддержка</div>
-                <div class="flex gap-2" style="flex-wrap: wrap;">
-                  {% for t in support_tags %}
-                    <span class="badge badge-neutral">{{ t.name }}</span>
-                  {% endfor %}
-                </div>
-              </div>
-            {% endif %}
-
-            {% if language_tags %}
-              <div>
-                <div class="text-muted text-sm mb-2">Языки интерфейса</div>
-                <div class="flex gap-2" style="flex-wrap: wrap;">
-                  {% for t in language_tags %}
-                    <span class="badge badge-neutral">{{ t.name }}</span>
+                <div class="text-muted text-sm mb-2">Теги</div>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                  {% for group_label, tags in tags_by_group %}
+                    <div>
+                      <div class="text-muted text-sm mb-1">{{ group_label }}</div>
+                      <div class="flex gap-2" style="flex-wrap: wrap;">
+                        {% for t in tags %}
+                          <span class="badge badge-neutral">{{ t.name }}</span>
+                        {% endfor %}
+                      </div>
+                    </div>
                   {% endfor %}
                 </div>
               </div>

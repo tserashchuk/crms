@@ -1,0 +1,27 @@
+{% load static %}
+{% if popular_products %}
+  <div class="card mb-4">
+    <div class="card-header">
+      <h3 class="card-title" style="font-size: 1rem; margin: 0;">{{ title|default:"Популярные сервисы" }}</h3>
+    </div>
+    <div class="card-body" style="padding: 1rem;">
+      <ul class="list-unstyled mb-0" style="display: grid; gap: 0.75rem;">
+        {% for p in popular_products %}
+          <li>
+            <a href="{{ p.get_absolute_url }}" style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: inherit;">
+              {% if p.logo %}
+                <img src="{{ p.logo.url }}" alt="" style="width: 36px; height: 36px; object-fit: contain; flex-shrink: 0;">
+              {% else %}
+                <span style="width: 36px; height: 36px; background: var(--gray-200); border-radius: var(--radius-base); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem; flex-shrink: 0;">{{ p.name|slice:":1" }}</span>
+              {% endif %}
+              <span style="font-weight: 500; font-size: 0.9375rem;">{{ p.name }}</span>
+              {% if p.rating > 0 %}
+                <span class="text-muted text-sm" style="margin-left: auto;">★ {{ p.rating }}</span>
+              {% endif %}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+{% endif %}

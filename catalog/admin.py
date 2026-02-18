@@ -52,7 +52,7 @@ class ProductAdmin(admin.ModelAdmin):
         "category",
         "pricing_model",
     )
-    search_fields = ("name", "slug", "short_description", "description")
+    search_fields = ("name", "slug", "short_description", "description", "extended_description")
     prepopulated_fields = {"slug": ("name",)}
     filter_horizontal = ("tags",)
     ordering = ("sort_order", "name")
@@ -81,8 +81,8 @@ class ProductAdmin(admin.ModelAdmin):
         return JsonResponse(result)
 
     fieldsets = (
-        ("Основное", {"fields": ("name", "slug", "logo", "short_description", "category", "website_url", "is_published", "sort_order")}),
-        ("Описание", {"fields": ("description", "key_features", "advantages", "disadvantages")}),
+        ("Основное", {"fields": ("name", "slug", "logo", "short_description", "category", "website_url", "documentation_url", "support_url", "is_published", "sort_order")}),
+        ("Описание", {"fields": ("description", "extended_description", "key_features", "advantages", "disadvantages")}),
         ("Характеристики", {"fields": ("deployment_type", "business_size", "support_24_7", "tags")}),
         ("Цены", {"fields": ("pricing_model", "pricing_details", "free_plan", "trial_available")}),
         ("Рейтинг", {"fields": ("rating", "reviews_count")}),

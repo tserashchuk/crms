@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}Сохранённые системы — Каталог{% endblock %}
+{% block og_title %}Сохранённые системы — Каталог CRM/CDP/ERP{% endblock %}
+
+{% block content %}
+  <div class="row g-4">
+    <div class="col-12">
+      <header class="mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+          <div>
+            <h1 style="font-size: 1.875rem; font-weight: 700; margin-bottom: 0.5rem;">Сохранённые</h1>
+            <p class="text-muted mb-0">Системы, которые вы сохранили для быстрого доступа</p>
+            {% if products %}
+              <p class="text-muted text-sm mt-2"><strong>{{ products|length }}</strong> {{ products|length|pluralize:"система,системы,систем" }}</p>
+            {% endif %}
+          </div>
+          {% if products %}
+            <form method="post" action="{% url 'catalog:clear_saved' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-secondary">Убрать все из сохранённых</button>
+            </form>
+          {% endif %}
+        </div>
+      </header>
+
+      {% if products %}
+        <div class="row g-3">
+          {% for p in products %}
+            <div class="col-md-6 col-xl-4">
+              <div class="card product-card">
+                <div class="product-card-header">
+                  <div class="product-logo">
+                    {% if p.logo %}
+                      <img src="{{ p.logo.url }}" alt="{{ p.name }}">
+                    {% else %}
+                      <img src="https://ui-avatars.com/api/?name={{ p.name|urlencode }}&size=64&background=1560BD&color=ffffff&bold=true" alt="{{ p.name }}">
+                    {% endif %}
+                  </div>
+                  <div class="product-info">
+                    <a href="{{ p.get_absolute_url }}" class="product-name">{{ p.name }}</a>
+                    <p class="product-description">{{ p.short_description|truncatechars:100 }}</p>
+                    <div class="flex gap-2" style="flex-wrap: wrap;">
+                      {% if p.free_plan %}<span class="badge badge-success">FREE</span>{% endif %}
+                      {% if p.trial_available %}<span class="badge badge-info">TRIAL</span>{% endif %}
+                      {% if p.deployment_type %}<span class="badge badge-neutral">{{ p.get_deployment_type_display|truncatechars:15 }}</span>{% endif %}
+                    </div>
+                  </div>
+                </div>
+                <div class="product-meta">
+                  {% if p.rating > 0 %}
+                    <div class="product-rating">
+                      {% for i in "12345" %}
+                        <span class="rating-star {% if forloop.counter > p.rating %}empty{% endif %}">★</span>
+                      {% endfor %}
+                      <span>{{ p.rating }}</span>
+                    </div>
+                  {% endif %}
+                  <div class="flex gap-2" style="margin-left: auto;">
+                    <a href="{{ p.get_absolute_url }}" class="btn btn-sm btn-primary">Подробнее</a>
+                    <form method="post" action="{% url 'catalog:toggle_saved' p.id %}" style="display: inline;">
+                      {% csrf_token %}
+                      <input type="hidden" name="next" value="{% url 'catalog:saved_list' %}">
+                      <button type="submit" class="btn btn-sm btn-secondary" title="Убрать из сохранённых">
+                        <img src="{% static 'images/icons/bookmark.svg' %}" alt="" class="icon icon-sm" style="opacity: 1;">
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="card">
+          <div class="card-body" style="padding: 3rem; text-align: center;">
+            <img src="{% static 'images/icons/bookmark.svg' %}" alt="" class="icon" style="width: 48px; height: 48px; color: var(--gray-400); margin-bottom: 1rem;">
+            <p class="text-muted mb-2">Пока нет сохранённых систем</p>
+            <p class="text-muted text-sm mb-0">Нажимайте «Сохранить» на карточках систем, чтобы добавлять их сюда</p>
+            <a href="{% url 'catalog:home' %}" class="btn btn-primary mt-3">Перейти в каталог</a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}Сравнение систем — Каталог{% endblock %}
+{% block og_title %}Сравнение систем — Каталог CRM/CDP/ERP{% endblock %}
+
+{% block content %}
+  <div class="row g-4">
+    <div class="col-12">
+      <header class="mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+          <div>
+            <h1 style="font-size: 1.875rem; font-weight: 700; margin-bottom: 0.5rem;">Сравнение</h1>
+            <p class="text-muted mb-0">Сравните выбранные системы по основным параметрам</p>
+            {% if products %}
+              <p class="text-muted text-sm mt-2">Можно добавить до {{ max_compare }} систем</p>
+            {% endif %}
+          </div>
+          {% if products %}
+            <form method="post" action="{% url 'catalog:clear_compare' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-secondary">Убрать все из сравнения</button>
+            </form>
+          {% endif %}
+        </div>
+      </header>
+
+      {% if products %}
+        <div class="table-responsive">
+          <table class="table" style="border-collapse: collapse; width: 100%;">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--gray-300);">
+                <th style="padding: 0.75rem; text-align: left; width: 180px; vertical-align: top;" class="text-muted text-sm">Параметр</th>
+                {% for p in products %}
+                  <th style="padding: 0.75rem; min-width: 160px; vertical-align: top;">
+                    <div class="d-flex align-items-start gap-2 flex-column">
+                      <div class="d-flex align-items-center gap-2">
+                        {% if p.logo %}
+                          <img src="{{ p.logo.url }}" alt="" style="width: 40px; height: 40px; object-fit: contain;">
+                        {% else %}
+                          <div style="width: 40px; height: 40px; background: var(--gray-300); border-radius: var(--radius-base); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem;">{{ p.name|slice:":1" }}</div>
+                        {% endif %}
+                        <a href="{{ p.get_absolute_url }}" style="font-weight: 600; color: inherit;">{{ p.name }}</a>
+                      </div>
+                      <form method="post" action="{% url 'catalog:toggle_compare' p.id %}" class="mb-0">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'catalog:compare_list' %}">
+                        <button type="submit" class="btn btn-sm btn-outline" style="font-size: 0.75rem;">Убрать</button>
+                      </form>
+                    </div>
+                  </th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom: 1px solid var(--gray-200);">
+                <td style="padding: 0.75rem;" class="text-muted text-sm">Описание</td>
+                {% for p in products %}
+                  <td style="padding: 0.75rem; font-size: 0.875rem;">{{ p.short_description|truncatewords:15 }}</td>
+                {% endfor %}
+              </tr>
+              <tr style="border-bottom: 1px solid var(--gray-200);">
+                <td style="padding: 0.75rem;" class="text-muted text-sm">Категория</td>
+                {% for p in products %}
+                  <td style="padding: 0.75rem;"><a href="{{ p.category.get_absolute_url }}">{{ p.category.name }}</a></td>
+                {% endfor %}
+              </tr>
+              <tr style="border-bottom: 1px solid var(--gray-200);">
+                <td style="padding: 0.75rem;" class="text-muted text-sm">Рейтинг</td>
+                {% for p in products %}
+                  <td style="padding: 0.75rem;">
+                    {% if p.rating > 0 %}
+                      <span class="product-rating">{% for i in "12345" %}<span class="rating-star {% if forloop.counter > p.rating %}empty{% endif %}">★</span>{% endfor %}</span> {{ p.rating }} ({{ p.reviews_count|default:0 }} отз.)
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                {% endfor %}
+              </tr>
+              <tr style="border-bottom: 1px solid var(--gray-200);">
+                <td style="padding: 0.75rem;" class="text-muted text-sm">Тип развертывания</td>
+                {% for p in products %}
+                  <td style="padding: 0.75rem;">{% if p.deployment_type %}{{ p.get_deployment_type_display }}{% else %}—{% endif %}</td>
+                {% endfor %}
+              </tr>
+              <tr style="border-bottom: 1px solid var(--gray-200);">
+                <td style="padding: 0.75rem;" class="text-muted text-sm">Размер бизнеса</td>
+                {% for p in products %}
+                  <td style="padding: 0.75rem;">{% if p.business_size %}{{ p.get_business_size_display }}{% else %}—{% endif %}</td>
+                {% endfor %}
+              </tr>
+              <tr style="border-bottom: 1px solid var(--gray-200);">
+                <td style="padding: 0.75rem;" class="text-muted text-sm">Бесплатная версия</td>
+                {% for p in products %}
+                  <td style="padding: 0.75rem;">{% if p.free_plan %}Да{% else %}Нет{% endif %}</td>
+                {% endfor %}
+              </tr>
+              <tr style="border-bottom: 1px solid var(--gray-200);">
+                <td style="padding: 0.75rem;" class="text-muted text-sm">Пробный период</td>
+                {% for p in products %}
+                  <td style="padding: 0.75rem;">{% if p.trial_available %}Да{% else %}Нет{% endif %}</td>
+                {% endfor %}
+              </tr>
+              <tr style="border-bottom: 1px solid var(--gray-200);">
+                <td style="padding: 0.75rem;" class="text-muted text-sm">Ценообразование</td>
+                {% for p in products %}
+                  <td style="padding: 0.75rem;">{% if p.pricing_model %}{{ p.get_pricing_model_display }}{% else %}—{% endif %}{% if p.pricing_details %} <span class="text-muted text-sm">({{ p.pricing_details|truncatechars:30 }})</span>{% endif %}</td>
+                {% endfor %}
+              </tr>
+              <tr style="border-bottom: 1px solid var(--gray-200);">
+                <td style="padding: 0.75rem;" class="text-muted text-sm">Поддержка 24/7</td>
+                {% for p in products %}
+                  <td style="padding: 0.75rem;">{% if p.support_24_7 %}Да{% else %}Нет{% endif %}</td>
+                {% endfor %}
+              </tr>
+              <tr style="border-bottom: 1px solid var(--gray-200);">
+                <td style="padding: 0.75rem;" class="text-muted text-sm">Сайт</td>
+                {% for p in products %}
+                  <td style="padding: 0.75rem;">{% if p.website_url %}<a href="{{ p.website_url }}" target="_blank" rel="noopener">Перейти</a>{% else %}—{% endif %}</td>
+                {% endfor %}
+              </tr>
+              <tr style="border-bottom: 1px solid var(--gray-200);">
+                <td style="padding: 0.75rem;" class="text-muted text-sm">Теги (интеграции, поддержка, языки)</td>
+                {% for p in products %}
+                  <td style="padding: 0.75rem;">
+                    {% with tags_by_group=p.get_tags_by_group %}
+                      {% for group_label, tags in tags_by_group %}
+                        <div class="mb-1"><span class="text-muted text-sm">{{ group_label }}:</span>
+                        {% for t in tags|slice:":5" %}<span class="badge badge-neutral" style="font-size: 0.7rem;">{{ t.name }}</span>{% endfor %}{% if tags|length > 5 %} +{{ tags|length|add:"-5" }}{% endif %}</div>
+                      {% empty %}
+                        —
+                      {% endfor %}
+                    {% endwith %}
+                  </td>
+                {% endfor %}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="card">
+          <div class="card-body" style="padding: 3rem; text-align: center;">
+            <img src="{% static 'images/icons/compare.svg' %}" alt="" class="icon" style="width: 48px; height: 48px; color: var(--gray-400); margin-bottom: 1rem;">
+            <p class="text-muted mb-2">Нет систем для сравнения</p>
+            <p class="text-muted text-sm mb-0">Нажимайте «Сравнить» на карточках систем (до {{ max_compare }}), затем откройте эту страницу</p>
+            <a href="{% url 'catalog:home' %}" class="btn btn-primary mt-3">Перейти в каталог</a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

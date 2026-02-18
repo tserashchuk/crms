@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models import Avg, Count
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.text import slugify
 
@@ -114,10 +118,13 @@ class Product(models.Model):
 
     category = models.ForeignKey(Category, verbose_name="Категория/подкатегория", on_delete=models.PROTECT)
     website_url = models.URLField("Официальный сайт", max_length=500, blank=True)
+    documentation_url = models.URLField("Документация", max_length=500, blank=True)
+    support_url = models.URLField("Поддержка (ссылка)", max_length=500, blank=True)
     source_page_url = models.URLField("Источник (страница из семантики)", max_length=500, blank=True, default="")
     source_keyword = models.CharField("Ключевая фраза (семантика)", max_length=300, blank=True, default="")
 
     description = models.TextField("Полное описание", blank=True)
+    extended_description = models.TextField("Расширенное описание", blank=True)
     key_features = models.TextField("Ключевые функции/модули", blank=True, help_text="Список, по одной на строку.")
     advantages = models.CharField(
         "Преимущества",
@@ -199,6 +206,16 @@ class Product(models.Model):
     def tag_slugs(self, group: str) -> list[str]:
         return list(self.tags.filter(group=group).values_list("slug", flat=True))
 
+    def get_tags_by_group(self) -> list[tuple[str, list[Tag]]]:
+        """Список пар (название группы тегов, список тегов) для отображения в карточке."""
+        result: list[tuple[str, list[Tag]]] = []
+        for group_value, group_label in Tag.Group.choices:
+            tags_in_group = [t for t in self.tags.all() if t.group == group_value]
+            if tags_in_group:
+                tags_in_group.sort(key=lambda t: (t.sort_order, t.name))
+                result.append((group_label, tags_in_group))
+        return result
+
 
 class Review(models.Model):
     product = models.ForeignKey(Product, verbose_name="Сервис", related_name="reviews", on_delete=models.CASCADE)
@@ -220,4 +237,26 @@ class Review(models.Model):
 
     def __str__(self) -> str:
         return f"{self.product.name}: {self.rating}★ от {self.author_name}"
+
+
+def _update_product_review_stats(product_id: int) -> None:
+    """Пересчитывает rating и reviews_count у продукта по опубликованным отзывам."""
+    stats = (
+        Review.objects.filter(product_id=product_id, is_published=True)
+        .aggregate(avg=Avg("rating"), count=Count("id"))
+    )
+    avg = stats["avg"]
+    count = stats["count"] or 0
+    rating = round(Decimal(avg), 1) if avg is not None else Decimal("0")
+    Product.objects.filter(pk=product_id).update(rating=rating, reviews_count=count)
+
+
+@receiver(post_save, sender=Review)
+def _review_save_update_product_stats(sender, instance: Review, **kwargs) -> None:
+    _update_product_review_stats(instance.product_id)
+
+
+@receiver(post_delete, sender=Review)
+def _review_delete_update_product_stats(sender, instance: Review, **kwargs) -> None:
+    _update_product_review_stats(instance.product_id)
 
