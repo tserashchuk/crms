@@ -7,7 +7,7 @@
 {% block content %}
   <div class="row g-4">
     <div class="col-12 col-lg-3">
-      <div class="p-3 bg-white border rounded-3 shadow-sm sticky-lg-top" style="top: 84px;">
+      <div class="vuexy-card p-3 sticky-lg-top" style="top: 84px;">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <div class="fw-semibold">Фильтры</div>
           <a class="small text-decoration-none" href="{{ canonical_url }}">Сбросить</a>
@@ -131,14 +131,14 @@
         <div class="row g-3">
           {% for p in page_obj.object_list %}
             <div class="col-12 col-md-6 col-xl-4">
-              <div class="card h-100 border-0 shadow-sm">
+              <div class="card h-100 vuexy-style border">
                 <div class="card-body">
                   <div class="d-flex gap-3 align-items-start">
                     <div class="logo-box">
                       {% if p.logo %}
                         <img src="{{ p.logo.url }}" alt="{{ p.name }}" class="img-fluid rounded">
                       {% else %}
-                        <div class="logo-placeholder rounded">{{ top.name|slice:":3" }}</div>
+                        <img src="https://ui-avatars.com/api/?name={{ p.name|urlencode }}&size=56&background=696cff&color=ffffff" alt="{{ p.name }}" class="img-fluid rounded logo-placeholder-img">
                       {% endif %}
                     </div>
                     <div class="flex-grow-1">
@@ -153,7 +153,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="card-footer bg-white border-0 pt-0">
+                <div class="card-footer bg-transparent border-0 pt-0">
                   <div class="small text-muted">Рейтинг: {{ p.rating }}</div>
                 </div>
               </div>
@@ -175,7 +175,7 @@
           </nav>
         {% endif %}
       {% else %}
-        <div class="p-4 bg-white border rounded-3 shadow-sm text-muted">По выбранным фильтрам ничего не найдено.</div>
+        <div class="vuexy-card p-4 text-muted">По выбранным фильтрам ничего не найдено.</div>
       {% endif %}
     </div>
   </div>

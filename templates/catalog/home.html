@@ -3,57 +3,78 @@
 {% block title %}Каталог CRM/CDP/ERP{% if q %} — поиск{% endif %}{% endblock %}
 
 {% block content %}
-  <div class="row g-4 align-items-start">
-    <div class="col-12 col-lg-5">
-      <div class="p-4 bg-white border rounded-3 shadow-sm">
-        <h1 class="h3 mb-2">Каталог CRM, CDP и ERP</h1>
-        <p class="text-muted mb-3">Выбирайте системы управления продажами, данными клиентов и бизнес‑процессами. Фильтры по развёртыванию, размеру бизнеса, интеграциям и поддержке.</p>
-
-        <div class="d-grid gap-2">
-          {% for c in top_categories %}
-            <a class="btn btn-primary btn-lg" href="{{ c.get_absolute_url }}">{{ c.name }}</a>
-          {% endfor %}
-        </div>
+  <!-- Hero -->
+  <section class="home-hero vuexy-card p-4 p-md-5 mb-4">
+    <div class="row align-items-center">
+      <div class="col-12 col-lg-7">
+        <h1 class="home-hero-title mb-3">Каталог CRM, CDP и ERP</h1>
+        <p class="home-hero-lead text-muted mb-0">
+          Выбирайте системы управления продажами, данными клиентов и бизнес‑процессами.
+          Фильтры по развёртыванию, размеру бизнеса, интеграциям и поддержке.
+        </p>
+      </div>
+      <div class="col-12 col-lg-5 mt-4 mt-lg-0 text-lg-end">
+        <a href="{% url 'catalog:home' %}?q=" class="btn btn-primary btn-lg px-4">
+          Все сервисы
+        </a>
       </div>
     </div>
+  </section>
 
-    <div class="col-12 col-lg-7">
-      <div class="p-4 bg-white border rounded-3 shadow-sm">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-          <h2 class="h5 mb-0">{% if q %}Результаты поиска{% else %}Новые/обновлённые сервисы{% endif %}</h2>
-          {% if q %}<a class="small text-decoration-none" href="{% url 'catalog:home' %}">Сбросить</a>{% endif %}
-        </div>
+  <!-- Разделы каталога -->
+  {% if top_categories %}
+    <section class="home-categories mb-5">
+      <h2 class="home-section-title mb-3">Разделы каталога</h2>
+      <nav class="home-category-strip vuexy-card p-0" aria-label="Категории">
+        <ul class="home-category-list">
+          {% for c in top_categories %}
+            <li class="home-category-item">
+              <a href="{{ c.get_absolute_url }}" class="home-category-link">{{ c.name }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </nav>
+    </section>
+  {% endif %}
 
-        {% if latest %}
-          <div class="row g-3">
-            {% for p in latest %}
-              <div class="col-12 col-md-6">
-                <div class="card h-100 border-0 shadow-sm">
-                  <div class="card-body">
-                    <div class="d-flex align-items-start gap-3">
-                      <div class="logo-box">
-                        {% if p.logo %}
-                          <img src="{{ p.logo.url }}" alt="{{ p.name }}" class="img-fluid rounded">
-                        {% else %}
-                          <div class="logo-placeholder rounded">CRM</div>
-                        {% endif %}
-                      </div>
-                      <div class="flex-grow-1">
-                        <div class="small text-muted">{{ p.get_top.name }}</div>
-                        <a class="stretched-link text-decoration-none" href="{{ p.get_absolute_url }}"><strong>{{ p.name }}</strong></a>
-                        <div class="text-muted small mt-1">{{ p.short_description }}</div>
-                      </div>
-                    </div>
-                  </div>
+  <!-- Сервисы -->
+  <section class="home-services">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+      <h2 class="home-section-title mb-0">
+        {% if q %}Результаты поиска{% else %}Новые и обновлённые сервисы{% endif %}
+      </h2>
+      {% if q %}
+        <a href="{% url 'catalog:home' %}" class="btn btn-sm btn-outline-primary">Сбросить поиск</a>
+      {% endif %}
+    </div>
+
+    {% if latest %}
+      <div class="row g-3">
+        {% for p in latest %}
+          <div class="col-12 col-md-6 col-xl-4">
+            <article class="card h-100 vuexy-style border home-service-card">
+              <div class="card-body d-flex align-items-start gap-3">
+                <div class="logo-box flex-shrink-0">
+                  {% if p.logo %}
+                    <img src="{{ p.logo.url }}" alt="{{ p.name }}" class="img-fluid rounded">
+                  {% else %}
+                    <img src="https://ui-avatars.com/api/?name={{ p.name|urlencode }}&size=56&background=696cff&color=ffffff" alt="{{ p.name }}" class="img-fluid rounded logo-placeholder-img">
+                  {% endif %}
+                </div>
+                <div class="flex-grow-1 min-w-0">
+                  <span class="d-block small text-muted mb-1">{{ p.get_top.name }}</span>
+                  <a class="stretched-link text-decoration-none fw-semibold text-dark" href="{{ p.get_absolute_url }}">{{ p.name }}</a>
+                  <p class="text-muted small mt-1 mb-0 line-clamp-2">{{ p.short_description }}</p>
                 </div>
               </div>
-            {% endfor %}
+            </article>
           </div>
-        {% else %}
-          <div class="text-muted">Ничего не найдено.</div>
-        {% endif %}
+        {% endfor %}
       </div>
-    </div>
-  </div>
+    {% else %}
+      <div class="vuexy-card p-5 text-center text-muted">
+        <p class="mb-0">По вашему запросу ничего не найдено. Попробуйте изменить поиск или откройте раздел каталога.</p>
+      </div>
+    {% endif %}
+  </section>
 {% endblock %}
-
