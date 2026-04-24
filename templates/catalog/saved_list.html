@@ -6,83 +6,110 @@
 {% block og_title %}Сохранённые системы — Каталог CRM/CDP/ERP{% endblock %}
 
 {% block content %}
-  <div class="row g-4">
-    <div class="col-12">
-      <header class="mb-4">
-        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
-          <div>
-            <h1 style="font-size: 1.875rem; font-weight: 700; margin-bottom: 0.5rem;">Сохранённые</h1>
-            <p class="text-muted mb-0">Системы, которые вы сохранили для быстрого доступа</p>
-            {% if products %}
-              <p class="text-muted text-sm mt-2"><strong>{{ products|length }}</strong> {{ products|length|pluralize:"система,системы,систем" }}</p>
-            {% endif %}
+<div class="min-h-[80vh] bg-slate-50 py-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Header -->
+    <div class="mb-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4" data-aos="fade-up">
+      <div>
+        <div class="flex items-center gap-3 mb-2">
+          <div class="bg-emerald-100 text-emerald-600 p-2 rounded-lg">
+            <i data-lucide="bookmark" class="h-6 w-6"></i>
           </div>
-          {% if products %}
-            <form method="post" action="{% url 'catalog:clear_saved' %}">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-secondary">Убрать все из сохранённых</button>
-            </form>
-          {% endif %}
+          <h1 class="text-3xl font-heading font-bold text-slate-900 m-0">
+            Сохранённые системы
+          </h1>
         </div>
-      </header>
+        <p class="text-slate-500 m-0">
+          Системы, которые вы отметили для быстрого доступа
+        </p>
+      </div>
 
       {% if products %}
-        <div class="row g-3">
-          {% for p in products %}
-            <div class="col-md-6 col-xl-4">
-              <div class="card product-card">
-                <div class="product-card-header">
-                  <div class="product-logo">
-                    {% if p.logo %}
-                      <img src="{{ p.logo.url }}" alt="{{ p.name }}">
-                    {% else %}
-                      <img src="https://ui-avatars.com/api/?name={{ p.name|urlencode }}&size=64&background=1560BD&color=ffffff&bold=true" alt="{{ p.name }}">
-                    {% endif %}
-                  </div>
-                  <div class="product-info">
-                    <a href="{{ p.get_absolute_url }}" class="product-name">{{ p.name }}</a>
-                    <p class="product-description">{{ p.short_description|truncatechars:100 }}</p>
-                    <div class="flex gap-2" style="flex-wrap: wrap;">
-                      {% if p.free_plan %}<span class="badge badge-success">FREE</span>{% endif %}
-                      {% if p.trial_available %}<span class="badge badge-info">TRIAL</span>{% endif %}
-                      {% if p.deployment_type %}<span class="badge badge-neutral">{{ p.get_deployment_type_display|truncatechars:15 }}</span>{% endif %}
-                    </div>
-                  </div>
-                </div>
-                <div class="product-meta">
-                  {% if p.rating > 0 %}
-                    <div class="product-rating">
-                      {% for i in "12345" %}
-                        <span class="rating-star {% if forloop.counter > p.rating %}empty{% endif %}">★</span>
-                      {% endfor %}
-                      <span>{{ p.rating }}</span>
-                    </div>
-                  {% endif %}
-                  <div class="flex gap-2" style="margin-left: auto;">
-                    <a href="{{ p.get_absolute_url }}" class="btn btn-sm btn-primary">Подробнее</a>
-                    <form method="post" action="{% url 'catalog:toggle_saved' p.id %}" style="display: inline;">
-                      {% csrf_token %}
-                      <input type="hidden" name="next" value="{% url 'catalog:saved_list' %}">
-                      <button type="submit" class="btn btn-sm btn-secondary" title="Убрать из сохранённых">
-                        <img src="{% static 'images/icons/bookmark.svg' %}" alt="" class="icon icon-sm" style="opacity: 1;">
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div class="card">
-          <div class="card-body" style="padding: 3rem; text-align: center;">
-            <img src="{% static 'images/icons/bookmark.svg' %}" alt="" class="icon" style="width: 48px; height: 48px; color: var(--gray-400); margin-bottom: 1rem;">
-            <p class="text-muted mb-2">Пока нет сохранённых систем</p>
-            <p class="text-muted text-sm mb-0">Нажимайте «Сохранить» на карточках систем, чтобы добавлять их сюда</p>
-            <a href="{% url 'catalog:home' %}" class="btn btn-primary mt-3">Перейти в каталог</a>
-          </div>
-        </div>
+      <div class="flex gap-3">
+        <form method="post" action="{% url 'catalog:clear_saved' %}" class="m-0">
+          {% csrf_token %}
+          <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 hover:text-red-600 transition-colors shadow-sm cursor-pointer h-full">
+            <i data-lucide="trash-2" class="h-4 w-4"></i>
+            Очистить все
+          </button>
+        </form>
+      </div>
       {% endif %}
     </div>
+
+    <!-- Results Grid -->
+    {% if products %}
+       <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          {% for system in products %}
+             <a href="{{ system.get_absolute_url }}" class="group flex flex-col h-full bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-all hover:-translate-y-1 no-underline cursor-pointer" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:'1' }}00">
+                
+                <div class="flex items-start justify-between mb-4">
+                  <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center text-white font-heading font-bold text-xl overflow-hidden shadow-sm border border-slate-100
+                      {% if system.id|divisibleby:3 %}bg-blue-600{% elif system.id|divisibleby:2 %}bg-emerald-500{% else %}bg-indigo-600{% endif %}">
+                      {% if system.logo %}
+                        <img src="{{ system.logo.url }}" alt="{{ system.name }}" class="w-full h-full object-cover">
+                      {% else %}
+                        {{ system.name|slice:":2"|upper }}
+                      {% endif %}
+                    </div>
+                    <div>
+                      <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+                        {{ system.get_top.name }}
+                      </span>
+                      <h3 class="text-lg font-heading font-bold text-slate-900 leading-tight m-0 group-hover:text-teal-600 transition-colors" itemprop="name">
+                        {{ system.name }}
+                      </h3>
+                    </div>
+                  </div>
+                  
+                  {% if system.rating > 0 %}
+                  <div class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md shrink-0">
+                    <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i>
+                    <span class="text-sm font-bold text-slate-700">{{ system.rating|default:"0.0" }}</span>
+                  </div>
+                  {% endif %}
+                </div>
+
+                <p class="text-sm text-slate-600 flex-grow mb-6 leading-relaxed m-0">
+                  {{ system.short_description|truncatechars:120 }}
+                </p>
+
+                <div class="flex flex-wrap items-center justify-between gap-2 mt-auto pt-4 border-t border-slate-100">
+                  <div class="flex flex-wrap gap-2">
+                    {% if system.free_plan %}
+                      <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wide uppercase bg-emerald-100 text-emerald-700">FREE</span>
+                    {% endif %}
+                    {% if system.trial_available %}
+                      <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wide uppercase bg-cyan-100 text-cyan-700">TRIAL</span>
+                    {% endif %}
+                    {% if not system.free_plan and not system.trial_available %}
+                      <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wide uppercase bg-slate-100 text-slate-600">PAID</span>
+                    {% endif %}
+                  </div>
+                  <span class="text-xs font-medium text-slate-400">
+                    {{ system.reviews_count|default:"0" }} отзывов
+                  </span>
+                </div>
+             </a>
+          {% endfor %}
+       </div>
+    {% else %}
+       <!-- Empty State -->
+       <div class="flex flex-col items-center justify-center py-20 px-4 text-center bg-white rounded-2xl border border-slate-200 shadow-sm" data-aos="fade-up">
+          <div class="bg-slate-50 p-6 rounded-full mb-6">
+             <i data-lucide="bookmark" class="h-12 w-12 text-slate-300"></i>
+          </div>
+          <h2 class="text-2xl font-heading font-bold text-slate-900 mb-2 m-0">Ничего не найдено</h2>
+          <p class="text-slate-500 max-w-md mb-8">Пока нет сохранённых систем. Нажимайте «Сохранить» на карточках систем в каталоге, чтобы добавлять их сюда.</p>
+          <a href="{% url 'catalog:home' %}" class="inline-flex items-center gap-2 px-6 py-3 bg-teal-600 text-white font-medium rounded-xl hover:bg-teal-700 transition-colors no-underline">
+             Перейти в каталог
+             <i data-lucide="arrow-right" class="h-4 w-4"></i>
+          </a>
+       </div>
+    {% endif %}
+
   </div>
+</div>
 {% endblock %}

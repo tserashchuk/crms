@@ -6,96 +6,212 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Каталог CRM/CDP/ERP{% endblock %}</title>
   <meta name="description" content="{% if meta_description %}{{ meta_description }}{% else %}{% block meta_description %}Каталог CRM, CDP и ERP систем. Сравнение возможностей, отзывы пользователей и подбор решений для бизнеса.{% endblock %}{% endif %}">
-  <meta name="robots" content="index, follow">
-  {% if canonical_url %}
-  <link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ canonical_url }}">
-  {% endif %}
-  <!-- Open Graph -->
-  <meta property="og:type" content="{% block og_type %}website{% endblock %}">
-  <meta property="og:locale" content="ru_RU">
-  <meta property="og:site_name" content="CRM Каталог">
-  <meta property="og:title" content="{% block og_title %}Каталог CRM/CDP/ERP{% endblock %}">
-  <meta property="og:description" content="{% block og_description %}Каталог CRM, CDP и ERP систем. Сравнение и отзывы.{% endblock %}">
-  <meta property="og:url" content="{% if canonical_url %}{{ request.scheme }}://{{ request.get_host }}{{ canonical_url }}{% else %}{{ request.build_absolute_uri }}{% endif %}">
-  {% block og_image %}{% endblock %}
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="{% block twitter_card %}summary_large_image{% endblock %}">
-  <meta name="twitter:title" content="{% block twitter_title %}Каталог CRM/CDP/ERP{% endblock %}">
-  <meta name="twitter:description" content="{% block twitter_description %}Каталог CRM, CDP и ERP систем.{% endblock %}">
-  {% block twitter_image %}{% endblock %}
+  
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/site.css' %}">
-  {% if structured_data_scripts %}{% for script in structured_data_scripts %}<script type="application/ld+json">{{ script|safe }}</script>{% endfor %}{% endif %}
-  {% block structured_data %}{% endblock %}
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      corePlugins: {
+        preflight: true,
+      },
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            heading: ['Unbounded', 'sans-serif'],
+          },
+          colors: {
+            teal: {
+              50: '#f0fdfa',
+              100: '#ccfbf1',
+              500: '#14b8a6',
+              600: '#0d9488',
+              700: '#0f766e',
+            },
+            slate: {
+              50: '#f8fafc',
+              100: '#f1f5f9',
+              200: '#e2e8f0',
+              300: '#cbd5e1',
+              400: '#94a3b8',
+              500: '#64748b',
+              600: '#475569',
+              700: '#334155',
+              800: '#1e293b',
+              900: '#0f172a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- AOS Animations -->
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+  <style>
+    /* New Design Utilities */
+    .bg-dot-pattern {
+      background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    .lucide { display: inline-block; vertical-align: middle; }
+    
+    /* Hide scrollbar for clean look if needed */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+
   {% block extra_head %}{% endblock %}
 </head>
-<body>
-  <!-- Enterprise Navigation -->
-  <nav class="enterprise-navbar">
-    <div class="navbar-container">
-      <a href="{% url 'catalog:home' %}" class="navbar-brand">
-        <div class="brand-logo">C</div>
-        <span>CRM Каталог</span>
-      </a>
-      
-      <ul class="navbar-nav"><span style="display: flex;">
-        <li><a href="{% url 'catalog:home' %}" class="nav-link">Главная</a></li>
-        {% for c in TOP_CATEGORIES %}
-          <li><a href="{{ c.get_absolute_url }}" class="nav-link">{{ c.name }}</a></li>
-        {% endfor %}</span>
-      </ul>
-      
-      <div class="navbar-search">
-        <form action="{% url 'catalog:home' %}" method="get">
-          <img src="{% static 'images/icons/search.svg' %}" alt="" class="search-icon">
-          <input type="search" name="q" class="search-input" placeholder="Поиск систем..." value="{{ request.GET.q|default:'' }}">
-        </form>
-      </div>
-      
-      <div class="navbar-actions" style="display: flex; align-items: center; gap: 0.75rem;">
-        <a href="{% url 'catalog:saved_list' %}" class="nav-link" style="display: flex; align-items: center; gap: 0.35rem;">{% if saved_count %}<span class="badge badge-neutral" style="font-size: 0.7rem;">{{ saved_count }}</span>{% endif %}Сохранённые</a>
-        <a href="{% url 'catalog:compare_list' %}" class="nav-link" style="display: flex; align-items: center; gap: 0.35rem;">{% if compare_count %}<span class="badge badge-neutral" style="font-size: 0.7rem;">{{ compare_count }}</span>{% endif %}Сравнение</a>
-        <a href="{% url 'admin:index' %}" class="btn btn-sm btn-outline">Админка</a>
+<body class="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen flex flex-col">
+  
+  <!-- Header -->
+  <header class="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <!-- Logo & Nav -->
+        <div class="flex items-center gap-8">
+          <a href="{% url 'catalog:home' %}" class="flex items-center gap-2 group no-underline">
+            <div class="bg-teal-600 text-white p-1.5 rounded-lg group-hover:bg-teal-700 transition-colors">
+              <i data-lucide="hexagon" class="w-5 h-5 fill-current"></i>
+            </div>
+            <span class="font-heading font-bold text-lg tracking-tight text-slate-900 m-0">
+              CRM Каталог
+            </span>
+          </a>
+
+          <nav class="hidden md:flex items-center gap-6">
+            <a href="{% url 'catalog:home' %}" class="text-sm font-medium transition-colors text-slate-500 hover:text-slate-900 no-underline">Главная</a>
+            {% for c in TOP_CATEGORIES|slice:":3" %}
+              <a href="{{ c.get_absolute_url }}" class="text-sm font-medium transition-colors text-slate-500 hover:text-slate-900 no-underline">{{ c.name }}</a>
+            {% endfor %}
+          </nav>
+        </div>
+
+        <!-- Search -->
+        <div class="hidden lg:flex flex-1 max-w-md mx-8">
+          <div class="relative w-full">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i data-lucide="search" class="h-4 w-4 text-slate-400"></i>
+            </div>
+            <form action="{% url 'catalog:home' %}" method="get" class="m-0">
+              <input type="text" name="q" value="{{ request.GET.q|default:'' }}"
+                class="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm transition-all"
+                placeholder="Поиск систем...">
+            </form>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-4">
+          <a href="{% url 'catalog:saved_list' %}" class="hidden sm:flex flex-col items-center gap-1 text-slate-500 hover:text-slate-900 transition-colors relative no-underline">
+            <i data-lucide="bookmark" class="h-5 w-5"></i>
+            <span class="text-[10px] font-medium leading-none">Сохранённые</span>
+            {% if saved_count %}<span class="absolute -top-1 -right-2 bg-teal-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{{ saved_count }}</span>{% endif %}
+          </a>
+          <a href="{% url 'catalog:compare_list' %}" class="hidden sm:flex flex-col items-center gap-1 text-slate-500 hover:text-slate-900 transition-colors relative no-underline">
+            <i data-lucide="bar-chart-2" class="h-5 w-5"></i>
+            <span class="text-[10px] font-medium leading-none">Сравнение</span>
+            {% if compare_count %}<span class="absolute -top-1 -right-2 bg-teal-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{{ compare_count }}</span>{% endif %}
+          </a>
+          <div class="h-8 w-px bg-slate-200 hidden sm:block mx-2"></div>
+          <a href="{% url 'admin:index' %}" class="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 no-underline">
+            <i data-lucide="settings" class="h-4 w-4"></i>
+            <span class="hidden sm:inline">Админка</span>
+          </a>
+        </div>
       </div>
     </div>
-  </nav>
+  </header>
 
   <!-- Main Content -->
-  <main class="enterprise-content">
-    {% if breadcrumbs %}
-      <nav class="breadcrumb-nav" aria-label="breadcrumb" itemscope itemtype="https://schema.org/BreadcrumbList">
-        {% for name, url in breadcrumbs %}
-          <span itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
-            <meta itemprop="position" content="{{ forloop.counter }}">
-            {% if not forloop.last %}
-              <a href="{{ url }}" class="breadcrumb-link" itemprop="item"><span itemprop="name">{{ name }}</span></a>
-            {% else %}
-              <span class="breadcrumb-current" itemprop="name">{{ name }}</span>
-            {% endif %}
-          </span>{% if not forloop.last %}<span class="breadcrumb-separator">/</span>{% endif %}
-        {% endfor %}
-      </nav>
-    {% endif %}
-
+  <main class="flex-grow">
     {% block content %}{% endblock %}
   </main>
 
   <!-- Footer -->
-  <footer class="enterprise-footer" itemscope itemtype="https://schema.org/Organization">
-    <div class="footer-content">
-      <div>© {% now "Y" %} <span itemprop="name">CRM Каталог</span>. <span itemprop="description">Профессиональный каталог бизнес-систем.</span></div>
-      <div class="flex gap-4">
-        <a href="{% url 'catalog:home' %}" class="text-muted" itemprop="url">О проекте</a>
-        <span class="text-muted">•</span>
-        <span class="text-muted">Построено на Django</span>
+  <footer class="bg-white border-t border-slate-200 pt-16 pb-8 mt-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+        <div class="md:col-span-1">
+          <a href="{% url 'catalog:home' %}" class="flex items-center gap-2 mb-4 group no-underline">
+            <div class="bg-slate-900 text-white p-1.5 rounded-lg group-hover:bg-slate-800 transition-colors">
+              <i data-lucide="hexagon" class="w-5 h-5 fill-current"></i>
+            </div>
+            <span class="font-heading font-bold text-lg tracking-tight text-slate-900 m-0">
+              CRM Каталог
+            </span>
+          </a>
+          <p class="text-sm text-slate-500 leading-relaxed">
+            Профессиональный каталог бизнес-систем. Помогаем компаниям
+            находить лучшие IT-решения для роста и автоматизации.
+          </p>
+        </div>
+
+        <div>
+          <h4 class="font-heading font-semibold text-slate-900 mb-4">Каталог</h4>
+          <ul class="space-y-3 list-none p-0 m-0">
+            <li><a href="{% url 'catalog:home' %}" class="text-sm text-slate-500 hover:text-teal-600 transition-colors no-underline">Все системы</a></li>
+            {% for c in TOP_CATEGORIES|slice:":3" %}
+              <li><a href="{{ c.get_absolute_url }}" class="text-sm text-slate-500 hover:text-teal-600 transition-colors no-underline">{{ c.name }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-heading font-semibold text-slate-900 mb-4">Ресурсы</h4>
+          <ul class="space-y-3 list-none p-0 m-0">
+            <li><a href="#" class="text-sm text-slate-500 hover:text-teal-600 transition-colors no-underline">Блог</a></li>
+            <li><a href="{% url 'catalog:compare_list' %}" class="text-sm text-slate-500 hover:text-teal-600 transition-colors no-underline">Сравнение систем</a></li>
+            <li><a href="#" class="text-sm text-slate-500 hover:text-teal-600 transition-colors no-underline">Отзывы</a></li>
+            <li><a href="#" class="text-sm text-slate-500 hover:text-teal-600 transition-colors no-underline">Рейтинги</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-heading font-semibold text-slate-900 mb-4">Компания</h4>
+          <ul class="space-y-3 list-none p-0 m-0">
+            <li><a href="#" class="text-sm text-slate-500 hover:text-teal-600 transition-colors no-underline">О нас</a></li>
+            <li><a href="#" class="text-sm text-slate-500 hover:text-teal-600 transition-colors no-underline">Контакты</a></li>
+            <li><a href="#" class="text-sm text-slate-500 hover:text-teal-600 transition-colors no-underline">Партнерам</a></li>
+            <li><a href="{% url 'admin:index' %}" class="text-sm text-slate-500 hover:text-teal-600 transition-colors no-underline">Добавить систему</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+        <p class="text-sm text-slate-400 m-0">
+          © {% now "Y" %} CRM Каталог. Все права защищены.
+        </p>
+        <div class="flex gap-6">
+          <a href="#" class="text-sm text-slate-400 hover:text-slate-900 transition-colors no-underline">Политика конфиденциальности</a>
+          <a href="#" class="text-sm text-slate-400 hover:text-slate-900 transition-colors no-underline">Условия использования</a>
+        </div>
       </div>
     </div>
   </footer>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  {% block extra_js %}{% endblock %}
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- AOS Animations JS -->
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    lucide.createIcons();
+    AOS.init({
+      once: true,
+      offset: 50,
+      duration: 500,
+      easing: 'ease-out-cubic',
+    });
+  </script>
 </body>
 </html>

@@ -11,270 +11,315 @@
 {% block twitter_image %}{% if product.logo %}<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.logo.url }}">{% endif %}{% endblock %}
 
 {% block content %}
-  <div class="row g-4">
-    <!-- Main Content -->
-    <div class="col-lg-8">
-      <!-- Product Header -->
-      <div class="card mb-4" itemscope itemtype="https://schema.org/SoftwareApplication">
-        <link itemprop="url" href="{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}">
-        <link itemprop="applicationCategory" href="https://schema.org/BusinessApplication">
-        <meta itemprop="operatingSystem" content="Web">
-        <div class="card-body" style="padding: 2rem;">
-          <div class="flex gap-4 mb-4" style="align-items: start;">
-            <div class="product-logo" style="width: 80px; height: 80px;">
-              {% if product.logo %}
-                <img src="{{ product.logo.url }}" alt="{{ product.name }}" itemprop="image">
-              {% else %}
-                <img src="https://ui-avatars.com/api/?name={{ product.name|urlencode }}&size=80&background=1560BD&color=ffffff&bold=true" alt="{{ product.name }}" itemprop="image">
-              {% endif %}
-            </div>
-            <div style="flex: 1;">
-              <div class="product-category" style="margin-bottom: 0.5rem;">{{ top.name }}</div>
-              <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.75rem;" itemprop="name">{{ product.name }}</h1>
-              
-              {% if product.rating > 0 %}
-                <div class="product-rating mb-3" style="font-size: 1rem;" itemprop="aggregateRating" itemscope itemtype="https://schema.org/AggregateRating">
-                  <meta itemprop="ratingValue" content="{{ product.rating }}">
-                  <meta itemprop="ratingCount" content="{{ product.reviews_count|default:0 }}">
-                  <meta itemprop="bestRating" content="5">
-                  <meta itemprop="worstRating" content="1">
-                  {% for i in "12345" %}
-                    <span class="rating-star {% if forloop.counter > product.rating %}empty{% endif %}">★</span>
-                  {% endfor %}
-                  <span style="margin-left: 0.5rem; color: var(--gray-700);">{{ product.rating }} ({{ product.reviews_count|intcomma }} отзывов)</span>
-                </div>
-              {% endif %}
-
-              <p style="font-size: 1.125rem; color: var(--gray-700); margin-bottom: 1.5rem;" itemprop="description">{{ product.short_description }}</p>
-              
-              <div class="flex gap-2 mb-3" style="flex-wrap: wrap;">
-                {% if product.website_url %}
-                  <a href="{{ product.website_url }}" target="_blank" rel="noopener" class="btn btn-primary" itemprop="url">
-                    Официальный сайт
-                    <img src="{% static 'images/icons/external-link.svg' %}" alt="" class="icon icon-sm">
-                  </a>
-                {% endif %}
-                {% if product.documentation_url %}
-                  <a href="{{ product.documentation_url }}" target="_blank" rel="noopener" class="btn btn-secondary">Документация</a>
-                {% endif %}
-                {% if product.support_url %}
-                  <a href="{{ product.support_url }}" target="_blank" rel="noopener" class="btn btn-secondary">Поддержка</a>
-                {% endif %}
-                <form method="post" action="{% url 'catalog:toggle_saved' product.id %}" style="display: inline;">
-                  {% csrf_token %}
-                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                  <button type="submit" class="btn {% if product_in_saved %}btn-primary{% else %}btn-secondary{% endif %}" title="{% if product_in_saved %}Убрать из сохранённых{% else %}Сохранить в избранное{% endif %}">
-                    <img src="{% static 'images/icons/bookmark.svg' %}" alt="" class="icon icon-sm">
-                    {% if product_in_saved %}В сохранённых{% else %}Сохранить{% endif %}
-                  </button>
-                </form>
-                <form method="post" action="{% url 'catalog:toggle_compare' product.id %}" style="display: inline;">
-                  {% csrf_token %}
-                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                  <button type="submit" class="btn {% if product_in_compare %}btn-primary{% else %}btn-secondary{% endif %}" title="{% if product_in_compare %}Убрать из сравнения{% else %}Добавить к сравнению{% endif %}" {% if not product_in_compare and compare_count >= max_compare %}disabled title="Добавлено максимум систем ({{ max_compare }}). Уберите одну на странице сравнения."{% endif %}>
-                    <img src="{% static 'images/icons/compare.svg' %}" alt="" class="icon icon-sm">
-                    {% if product_in_compare %}В сравнении{% else %}Сравнить{% endif %}
-                  </button>
-                </form>
-                <button class="btn btn-secondary">
-                  <img src="{% static 'images/icons/share.svg' %}" alt="" class="icon icon-sm">
-                  Поделиться
-                </button>
+<!-- Full-width Hero section with bottom border -->
+<section class="bg-white border-b border-slate-200" itemscope itemtype="https://schema.org/SoftwareApplication">
+  <link itemprop="url" href="{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}">
+  <link itemprop="applicationCategory" href="https://schema.org/BusinessApplication">
+  <meta itemprop="operatingSystem" content="Web">
+  
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+      
+      <!-- Left side: Logo, Category, Rating, Title, Desc -->
+      <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+        <!-- Logo -->
+        <div class="flex-shrink-0 w-24 h-24 sm:w-28 sm:h-28 rounded-2xl flex items-center justify-center text-white font-heading font-bold text-3xl overflow-hidden shadow-sm border border-slate-100
+            {% if product.id|divisibleby:3 %}bg-blue-600{% elif product.id|divisibleby:2 %}bg-emerald-500{% else %}bg-indigo-600{% endif %}">
+            {% if product.logo %}
+              <img src="{{ product.logo.url }}" alt="{{ product.name }}" class="w-full h-full object-cover" itemprop="image">
+            {% else %}
+              {{ product.name|slice:":2"|upper }}
+            {% endif %}
+        </div>
+        
+        <div class="flex-1">
+          <!-- Badges & Rating -->
+          <div class="flex flex-wrap items-center gap-3 mb-2">
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-slate-100 text-slate-600 border border-slate-200">
+              {{ top.name }}
+            </span>
+            {% if product.rating > 0 %}
+              <div class="flex items-center gap-1.5" itemprop="aggregateRating" itemscope itemtype="https://schema.org/AggregateRating">
+                <meta itemprop="ratingValue" content="{{ product.rating }}">
+                <meta itemprop="ratingCount" content="{{ product.reviews_count|default:0 }}">
+                <meta itemprop="bestRating" content="5">
+                <meta itemprop="worstRating" content="1">
+                <i data-lucide="star" class="w-4 h-4 fill-amber-400 text-amber-400"></i>
+                <span class="text-sm font-bold text-slate-900">{{ product.rating }}</span>
+                <span class="text-sm text-slate-500">({{ product.reviews_count|default:0 }} отзывов)</span>
               </div>
+            {% endif %}
+          </div>
+          
+          <!-- Title -->
+          <h1 class="text-3xl sm:text-4xl font-heading font-bold text-slate-900 leading-tight mb-2 m-0" itemprop="name">{{ product.name }}</h1>
+          
+          <!-- Description -->
+          <p class="text-base sm:text-lg text-slate-600 leading-relaxed m-0" itemprop="description">{{ product.short_description }}</p>
+        </div>
+      </div>
 
-              <div class="flex gap-2" style="flex-wrap: wrap;">
-                {% if product.free_plan %}<span class="badge badge-success">Бесплатная версия</span>{% endif %}
-                {% if product.trial_available %}<span class="badge badge-info">Пробный период</span>{% endif %}
-                {% if product.deployment_type %}<span class="badge badge-neutral">{{ product.get_deployment_type_display }}</span>{% endif %}
-                {% if product.business_size %}<span class="badge badge-neutral">{{ product.get_business_size_display }}</span>{% endif %}
-                {% if product.support_24_7 %}<span class="badge badge-neutral">Поддержка 24/7</span>{% endif %}
-              </div>
-            </div>
+      <!-- Right side: Actions -->
+      <div class="flex flex-col sm:flex-row lg:flex-col gap-3 lg:min-w-[240px]">
+        {% if product.website_url %}
+        <a href="{{ product.website_url }}" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-base font-medium text-white bg-teal-600 hover:bg-teal-700 shadow-sm transition-all no-underline w-full" itemprop="url">
+          Перейти на сайт
+          <i data-lucide="globe" class="w-4 h-4"></i>
+        </a>
+        {% endif %}
+        
+        <div class="flex gap-3">
+          <form method="post" action="{% url 'catalog:toggle_saved' product.id %}" class="flex-1 m-0">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button type="submit" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border transition-all text-sm font-medium cursor-pointer {% if product_in_saved %}bg-teal-50 border-teal-200 text-teal-600{% else %}bg-white border-slate-200 text-slate-700 hover:bg-slate-50{% endif %}">
+              <i data-lucide="bookmark" class="w-4 h-4 {% if product_in_saved %}fill-current{% endif %}"></i>
+              {% if product_in_saved %}В сохранённых{% else %}Сохранить{% endif %}
+            </button>
+          </form>
+          
+          <button class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-all text-sm font-medium cursor-pointer">
+            <i data-lucide="share-2" class="w-4 h-4"></i>
+            Поделиться
+          </button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</section>
+
+<!-- Main Layout (Gray background) -->
+<section class="py-12 bg-slate-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+      
+      <!-- Left Column (Content) -->
+      <div class="flex-1 min-w-0">
+        
+        <!-- About System -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm mb-8" data-aos="fade-up">
+          <h2 class="text-2xl font-heading font-bold text-slate-900 mb-6 m-0">О системе</h2>
+          <div class="prose max-w-none text-slate-600 leading-relaxed">
+            {% if product.description %}
+              <p class="m-0">{{ product.description|linebreaksbr }}</p>
+            {% else %}
+              <p class="m-0 italic">Описание пока не заполнено.</p>
+            {% endif %}
           </div>
         </div>
-      </div>
 
-      <!-- Description & Features -->
-      <div class="card mb-4">
-        <div class="card-header">
-          <h2 class="card-title">Описание</h2>
+        {% if product.extended_description %}
+        <div class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm mb-8" data-aos="fade-up">
+          <h2 class="text-2xl font-heading font-bold text-slate-900 mb-6 m-0">Расширенное описание</h2>
+          <div class="prose max-w-none text-slate-600 leading-relaxed">
+            <p class="m-0">{{ product.extended_description|linebreaksbr }}</p>
+          </div>
         </div>
-        <div class="card-body">
-          {% if product.description %}
-            <div style="line-height: 1.7;">{{ product.description|linebreaksbr }}</div>
-          {% else %}
-            <p class="text-muted mb-0">Описание пока не заполнено.</p>
-          {% endif %}
-        </div>
-      </div>
+        {% endif %}
 
-      {% if product.extended_description %}
-      <div class="card mb-4">
-        <div class="card-header">
-          <h2 class="card-title">Расширенное описание</h2>
-        </div>
-        <div class="card-body">
-          <div style="line-height: 1.7;">{{ product.extended_description|linebreaksbr }}</div>
-        </div>
-      </div>
-      {% endif %}
-
-      {% if product.key_features %}
-      <div class="card mb-4">
-        <div class="card-header">
-          <h2 class="card-title">Ключевые функции</h2>
-        </div>
-        <div class="card-body">
-          <ul style="margin: 0; padding-left: 1.5rem;">
+        <!-- Key Features -->
+        {% if product.key_features %}
+        <div class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm mb-8" data-aos="fade-up">
+          <h2 class="text-2xl font-heading font-bold text-slate-900 mb-6 m-0">Ключевые возможности</h2>
+          <div class="grid sm:grid-cols-2 gap-4">
             {% for line in product.key_features.splitlines %}
-              {% if line %}<li style="margin-bottom: 0.5rem;">{{ line }}</li>{% endif %}
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-      {% endif %}
-
-      {% if tags_by_group %}
-      <div class="card mb-4">
-        <div class="card-header">
-          <h2 class="card-title">Теги</h2>
-        </div>
-        <div class="card-body">
-          <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-            {% for group_label, tags in tags_by_group %}
-              <div>
-                <div class="text-muted text-sm mb-1">{{ group_label }}</div>
-                <div class="flex gap-2" style="flex-wrap: wrap;">
-                  {% for t in tags %}
-                    <span class="badge badge-neutral">{{ t.name }}</span>
-                  {% endfor %}
+              {% if line %}
+                <div class="flex items-start gap-3">
+                  <i data-lucide="check-circle-2" class="w-5 h-5 text-teal-600 shrink-0 mt-0.5"></i>
+                  <span class="text-slate-700 font-medium">{{ line }}</span>
                 </div>
-              </div>
+              {% endif %}
             {% endfor %}
           </div>
         </div>
-      </div>
-      {% endif %}
+        {% endif %}
 
-      {% include "catalog/includes/popular_products_card.html" with popular_products=popular_products title="Популярные сервисы" %}
-
-      <!-- Reviews -->
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">Отзывы пользователей</h2>
-        </div>
-        <div class="card-body">
+        <!-- Reviews Section -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm" data-aos="fade-up">
+          <h2 class="text-2xl font-heading font-bold text-slate-900 mb-6 m-0">Отзывы пользователей</h2>
+          
           {% if published_reviews %}
-            <div style="display: grid; gap: 1rem; margin-bottom: 2rem;">
+            <div class="space-y-6 mb-8">
               {% for r in published_reviews %}
-                <div style="padding: 1rem; border: 1px solid var(--gray-300); border-radius: var(--radius-base);" itemscope itemtype="https://schema.org/Review">
-                  <div class="flex justify-between items-center mb-2">
-                    <strong itemprop="author" itemscope itemtype="https://schema.org/Person"><span itemprop="name">{{ r.author_name }}</span></strong>
-                    <div class="product-rating" itemprop="reviewRating" itemscope itemtype="https://schema.org/Rating">
+                <div class="p-6 border border-slate-200 rounded-xl bg-slate-50" itemscope itemtype="https://schema.org/Review">
+                  <div class="flex justify-between items-start mb-3">
+                    <div>
+                      <strong class="text-slate-900 font-heading block" itemprop="author" itemscope itemtype="https://schema.org/Person"><span itemprop="name">{{ r.author_name }}</span></strong>
+                      <div class="text-slate-500 text-sm mt-1">{% if r.created_at %}<time itemprop="datePublished" datetime="{{ r.created_at|date:'c' }}">{{ r.created_at|date:"d.m.Y" }}</time>{% endif %}</div>
+                    </div>
+                    <div class="flex items-center gap-1" itemprop="reviewRating" itemscope itemtype="https://schema.org/Rating">
                       <meta itemprop="ratingValue" content="{{ r.rating }}">
                       <meta itemprop="bestRating" content="5">
                       <meta itemprop="worstRating" content="1">
                       {% for i in "12345" %}
-                        <span class="rating-star {% if forloop.counter > r.rating %}empty{% endif %}">★</span>
+                        <i data-lucide="star" class="w-4 h-4 {% if forloop.counter <= r.rating %}fill-amber-400 text-amber-400{% else %}text-slate-300{% endif %}"></i>
                       {% endfor %}
                     </div>
                   </div>
-                  <div class="text-muted text-sm mb-2">{% if r.created_at %}<time itemprop="datePublished" datetime="{{ r.created_at|date:'c' }}">{{ r.created_at|date:"d.m.Y" }}</time>{% endif %}</div>
-                  <div itemprop="reviewBody">{{ r.text|linebreaksbr }}</div>
+                  <div class="text-slate-600 leading-relaxed" itemprop="reviewBody">{{ r.text|linebreaksbr }}</div>
                 </div>
               {% endfor %}
             </div>
           {% else %}
-            <p class="text-muted mb-3">Пока нет опубликованных отзывов.</p>
+            <p class="text-slate-500 italic mb-8">Пока нет опубликованных отзывов.</p>
           {% endif %}
 
-          <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Оставить отзыв</h3>
-          <form method="post">
-            {% csrf_token %}
-            {{ review_form.website }}
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label class="form-label">Имя</label>
-                {{ review_form.author_name }}
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Оценка (1–5)</label>
-                {{ review_form.rating }}
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Текст отзыва</label>
-              {{ review_form.text }}
-            </div>
-            {% if review_form.errors %}
-              <div style="padding: 0.75rem; background: var(--danger-light); border: 1px solid var(--danger); border-radius: var(--radius-base); margin-bottom: 1rem;">
-                <p class="text-sm mb-0" style="color: var(--danger);">Пожалуйста, исправьте ошибки формы.</p>
-              </div>
-            {% endif %}
-            <button type="submit" class="btn btn-primary">Отправить отзыв</button>
-            <p class="text-muted text-sm" style="margin-top: 0.5rem;">Отзыв появится после модерации администратором.</p>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- Sidebar -->
-    <div class="col-lg-4">
-      <div class="card sticky" style="top: 88px;">
-        <div class="card-header">
-          <h3 class="card-title">Характеристики</h3>
-        </div>
-        <div class="card-body">
-          <div style="display: grid; gap: 1.5rem;">
-            <div>
-              <div class="text-muted text-sm mb-1">Категория</div>
-              <div>
-                <a href="{{ product.category.get_absolute_url }}">{{ product.category.name }}</a>
-              </div>
-            </div>
-
-            {% if product.pricing_model or product.pricing_details %}
-              <div>
-                <div class="text-muted text-sm mb-1">Ценообразование</div>
+          <!-- Review Form -->
+          <div class="border-t border-slate-200 pt-8 mt-8">
+            <h3 class="text-xl font-heading font-bold text-slate-900 mb-6 m-0">Оставить отзыв</h3>
+            <form method="post" class="space-y-5 m-0">
+              {% csrf_token %}
+              {{ review_form.website }}
+              <div class="grid sm:grid-cols-2 gap-5">
                 <div>
-                  {% if product.pricing_model %}<div class="font-medium">{{ product.get_pricing_model_display }}</div>{% endif %}
-                  {% if product.pricing_details %}<div class="text-muted text-sm">{{ product.pricing_details }}</div>{% endif %}
+                  <label class="block text-sm font-medium text-slate-700 mb-2">Имя</label>
+                  {{ review_form.author_name }}
+                  <style>
+                    #id_author_name, #id_rating, #id_text {
+                      width: 100%;
+                      padding: 0.625rem 0.875rem;
+                      border-radius: 0.75rem;
+                      border: 1px solid #e2e8f0;
+                      background-color: #f8fafc;
+                      font-size: 0.875rem;
+                      transition: all 0.2s;
+                    }
+                    #id_author_name:focus, #id_rating:focus, #id_text:focus {
+                      outline: none;
+                      border-color: #0d9488;
+                      background-color: #ffffff;
+                      box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+                    }
+                  </style>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-2">Оценка (1–5)</label>
+                  {{ review_form.rating }}
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Текст отзыва</label>
+                {{ review_form.text }}
+              </div>
+              {% if review_form.errors %}
+                <div class="p-4 bg-red-50 border border-red-200 rounded-xl mb-4">
+                  <p class="text-sm text-red-600 m-0 font-medium">Пожалуйста, исправьте ошибки формы.</p>
+                </div>
+              {% endif %}
+              <div class="flex items-center justify-between mt-6">
+                <button type="submit" class="inline-flex items-center justify-center px-6 py-3 rounded-xl text-base font-medium text-white bg-teal-600 hover:bg-teal-700 shadow-sm transition-all cursor-pointer border-none">
+                  Отправить отзыв
+                </button>
+                <p class="text-slate-500 text-sm m-0 hidden sm:block">Отзыв появится после модерации.</p>
+              </div>
+            </form>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column (Sidebar) -->
+      <div class="w-full lg:w-80 shrink-0 flex flex-col gap-6">
+        
+        <!-- Info Card -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm" data-aos="fade-left">
+          <h3 class="text-lg font-heading font-bold text-slate-900 mb-6 m-0">Информация</h3>
+          <div class="space-y-4">
+            
+            {% if product.pricing_model or product.pricing_details %}
+              <div class="flex justify-between items-start gap-4">
+                <div class="flex items-center gap-2 text-slate-500 shrink-0">
+                  <i data-lucide="dollar-sign" class="w-4 h-4"></i>
+                  <span class="text-sm">Стоимость</span>
+                </div>
+                <div class="text-right">
+                  {% if product.pricing_model %}<div class="text-sm font-medium text-slate-900">{{ product.get_pricing_model_display }}</div>{% endif %}
+                  {% if product.pricing_details %}<div class="text-xs text-slate-600 mt-1">{{ product.pricing_details }}</div>{% endif %}
                 </div>
               </div>
             {% endif %}
 
             {% if product.updated_info_at %}
-              <div>
-                <div class="text-muted text-sm mb-1">Последнее обновление</div>
-                <div>{{ product.updated_info_at|date:"d.m.Y" }}</div>
+              <div class="flex justify-between items-center gap-4">
+                <div class="flex items-center gap-2 text-slate-500">
+                  <i data-lucide="calendar" class="w-4 h-4"></i>
+                  <span class="text-sm">Год обновления</span>
+                </div>
+                <div class="text-sm font-medium text-slate-900 text-right">
+                  {{ product.updated_info_at|date:"Y" }}
+                </div>
               </div>
             {% endif %}
-
-            {% if tags_by_group %}
-              <div>
-                <div class="text-muted text-sm mb-2">Теги</div>
-                <div style="display: flex; flex-direction: column; gap: 1rem;">
-                  {% for group_label, tags in tags_by_group %}
-                    <div>
-                      <div class="text-muted text-sm mb-1">{{ group_label }}</div>
-                      <div class="flex gap-2" style="flex-wrap: wrap;">
-                        {% for t in tags %}
-                          <span class="badge badge-neutral">{{ t.name }}</span>
-                        {% endfor %}
-                      </div>
-                    </div>
-                  {% endfor %}
+            
+            {% if product.deployment_type %}
+              <div class="flex justify-between items-center gap-4">
+                <div class="flex items-center gap-2 text-slate-500">
+                  <i data-lucide="server" class="w-4 h-4"></i>
+                  <span class="text-sm">Развертывание</span>
+                </div>
+                <div class="text-sm font-medium text-slate-900 text-right">
+                  {{ product.get_deployment_type_display }}
                 </div>
               </div>
             {% endif %}
           </div>
         </div>
-        <div class="card-footer">
-          <a href="{{ top.get_absolute_url }}" class="btn btn-secondary" style="width: 100%;">
-            Все {{ top.name }}
+
+        <!-- Help Card -->
+        <div class="bg-slate-900 rounded-2xl p-6 shadow-sm text-white" data-aos="fade-left" data-aos-delay="100">
+          <h3 class="text-lg font-heading font-bold mb-3 m-0">Нужна помощь с выбором?</h3>
+          <p class="text-slate-400 text-sm leading-relaxed mb-6 m-0">
+            Наши эксперты помогут подобрать оптимальную систему под задачи вашего бизнеса.
+          </p>
+          <a href="#" class="inline-flex items-center justify-center w-full px-4 py-3 rounded-xl text-sm font-medium text-white bg-teal-600 hover:bg-teal-500 transition-all no-underline">
+            Получить консультацию
           </a>
         </div>
+
+        <!-- Tags Card -->
+        {% if tags_by_group %}
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm" data-aos="fade-left" data-aos-delay="200">
+          <h3 class="text-lg font-heading font-bold text-slate-900 mb-4 m-0">Теги</h3>
+          <div class="space-y-4">
+            {% for group_label, tags in tags_by_group %}
+              <div>
+                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">{{ group_label }}</div>
+                <div class="flex flex-wrap gap-1.5">
+                  {% for t in tags %}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wide uppercase bg-slate-100 text-slate-600">{{ t.name }}</span>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        {% if product.documentation_url or product.support_url %}
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm" data-aos="fade-left" data-aos-delay="300">
+          <h3 class="text-lg font-heading font-bold text-slate-900 mb-4 m-0">Ссылки</h3>
+          <div class="space-y-3">
+            {% if product.documentation_url %}
+              <a href="{{ product.documentation_url }}" target="_blank" rel="noopener" class="flex items-center gap-3 text-slate-600 hover:text-teal-600 transition-colors no-underline text-sm font-medium">
+                <i data-lucide="book-open" class="w-4 h-4"></i>
+                Документация
+              </a>
+            {% endif %}
+            {% if product.support_url %}
+              <a href="{{ product.support_url }}" target="_blank" rel="noopener" class="flex items-center gap-3 text-slate-600 hover:text-teal-600 transition-colors no-underline text-sm font-medium">
+                <i data-lucide="life-buoy" class="w-4 h-4"></i>
+                Служба поддержки
+              </a>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+
       </div>
+
     </div>
   </div>
+</section>
+
 {% endblock %}

@@ -8,79 +8,101 @@
 {% block twitter_title %}{{ category.name }} — Каталог систем{% endblock %}
 
 {% block content %}
-  <div class="row g-4">
-    <!-- Filters Sidebar -->
-    <div class="col-lg-3">
-      <div class="card sticky" style="top: 88px;">
-        <div class="card-header">
-          <div class="flex justify-between items-center">
-            <div class="flex items-center gap-2">
-              <img src="{% static 'images/icons/filter.svg' %}" alt="" class="icon icon-sm">
-              <span class="card-title" style="font-size: 1rem; margin: 0;">Фильтры</span>
-            </div>
-            <a href="{{ canonical_url }}" class="text-sm" style="color: var(--primary-600);">Сбросить</a>
-          </div>
-        </div>
-        
-        <div class="card-body" style="padding: 1.5rem;">
-          <form method="get">
-            <div class="form-group">
-              <label class="form-label">Поиск по названию</label>
-              <input type="text" name="q" class="form-input" value="{{ request.GET.q|default:'' }}" placeholder="Введите название...">
-            </div>
+<div class="min-h-screen bg-slate-50 py-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Page Header -->
+    <div class="mb-12" data-aos="fade-up">
+      <h1 class="text-4xl font-heading font-bold text-slate-900 mb-4 m-0">
+        {{ category.name }}
+      </h1>
+      {% if category.description %}
+        <p class="text-lg text-slate-600 max-w-3xl leading-relaxed m-0">
+          {{ category.description }}
+        </p>
+      {% endif %}
+    </div>
 
-            <div class="form-group">
-              <label class="form-label">Тип развертывания</label>
-              <select name="deployment" class="form-select">
+    <!-- Filters Bar -->
+    <form method="get" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-8 m-0" data-aos="fade-up" data-aos-delay="100">
+      <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        
+        <!-- Search -->
+        <div class="relative w-full sm:max-w-md flex-1">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i data-lucide="search" class="h-5 w-5 text-slate-400"></i>
+          </div>
+          <input type="text" name="q" value="{{ request.GET.q|default:'' }}"
+            class="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm transition-all"
+            placeholder="Поиск по названию или описанию...">
+        </div>
+
+        <!-- Sort and Advanced Filters Toggle -->
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <button type="button" class="inline-flex items-center justify-center p-2.5 text-slate-500 hover:text-teal-600 hover:bg-teal-50 rounded-xl transition-colors border border-transparent cursor-pointer" onclick="document.getElementById('advanced-filters').classList.toggle('hidden')">
+            <i data-lucide="sliders-horizontal" class="h-5 w-5"></i>
+          </button>
+          
+          <select name="sort" class="block w-full sm:w-auto pl-3 pr-10 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white" onchange="this.form.submit()">
+            <option value="">По умолчанию</option>
+            <option value="rating" {% if request.GET.sort == "rating" %}selected{% endif %}>Сначала с высоким рейтингом</option>
+            <option value="name" {% if request.GET.sort == "name" %}selected{% endif %}>По алфавиту</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Advanced Filters (Hidden by default unless active filters exist) -->
+      <div id="advanced-filters" class="{% if not request.GET.deployment and not request.GET.business_size and not request.GET.free_plan and not request.GET.trial and not request.GET.rating_min and not selected_integration and not selected_support and not selected_language %}hidden{% endif %} mt-6 pt-6 border-t border-slate-100">
+         <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">Тип развертывания</label>
+              <select name="deployment" class="w-full pl-3 pr-8 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-slate-50">
                 <option value="">Все типы</option>
                 {% for v, label in deployment_choices %}
                   <option value="{{ v }}" {% if request.GET.deployment == v %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
               </select>
             </div>
-
-            <div class="form-group">
-              <label class="form-label">Размер бизнеса</label>
-              <select name="business_size" class="form-select">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">Размер бизнеса</label>
+              <select name="business_size" class="w-full pl-3 pr-8 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-slate-50">
                 <option value="">Любой размер</option>
                 {% for v, label in business_size_choices %}
                   <option value="{{ v }}" {% if request.GET.business_size == v %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
               </select>
             </div>
-
-            <div class="form-group">
-              <label class="form-label">Модель оплаты</label>
-              <div style="display: grid; gap: 0.5rem;">
-                <label style="display: flex; align-items: center; font-size: 0.875rem; cursor: pointer;">
-                  <input type="checkbox" name="free_plan" value="1" class="form-checkbox" {% if request.GET.free_plan == "1" %}checked{% endif %}>
-                  Бесплатная версия
-                </label>
-                <label style="display: flex; align-items: center; font-size: 0.875rem; cursor: pointer;">
-                  <input type="checkbox" name="trial" value="1" class="form-checkbox" {% if request.GET.trial == "1" %}checked{% endif %}>
-                  Пробный период
-                </label>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Минимальный рейтинг</label>
-              <select name="rating_min" class="form-select">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">Минимальный рейтинг</label>
+              <select name="rating_min" class="w-full pl-3 pr-8 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-slate-50">
                 <option value="">Любой</option>
                 <option value="4.5" {% if request.GET.rating_min == "4.5" %}selected{% endif %}>⭐ 4.5+</option>
                 <option value="4.0" {% if request.GET.rating_min == "4.0" %}selected{% endif %}>⭐ 4.0+</option>
                 <option value="3.5" {% if request.GET.rating_min == "3.5" %}selected{% endif %}>⭐ 3.5+</option>
               </select>
             </div>
-
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">Модель оплаты</label>
+              <div class="space-y-2">
+                <label class="flex items-center gap-2 cursor-pointer m-0">
+                  <input type="checkbox" name="free_plan" value="1" class="rounded border-slate-300 text-teal-600 focus:ring-teal-500" {% if request.GET.free_plan == "1" %}checked{% endif %}>
+                  <span class="text-sm text-slate-600">Бесплатная версия</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer m-0">
+                  <input type="checkbox" name="trial" value="1" class="rounded border-slate-300 text-teal-600 focus:ring-teal-500" {% if request.GET.trial == "1" %}checked{% endif %}>
+                  <span class="text-sm text-slate-600">Пробный период</span>
+                </label>
+              </div>
+            </div>
+            
             {% if integrations %}
-            <div class="form-group">
-              <label class="form-label">Интеграции</label>
-              <div style="max-height: 200px; overflow-y: auto; display: grid; gap: 0.5rem;">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">Интеграции</label>
+              <div class="max-h-40 overflow-y-auto space-y-2 pr-2">
                 {% for t in integrations %}
-                  <label style="display: flex; align-items: center; font-size: 0.875rem; cursor: pointer;">
-                    <input type="checkbox" name="integration" value="{{ t.slug }}" class="form-checkbox" {% if t.slug in selected_integration %}checked{% endif %}>
-                    {{ t.name }}
+                  <label class="flex items-center gap-2 cursor-pointer m-0">
+                    <input type="checkbox" name="integration" value="{{ t.slug }}" class="rounded border-slate-300 text-teal-600 focus:ring-teal-500" {% if t.slug in selected_integration %}checked{% endif %}>
+                    <span class="text-sm text-slate-600">{{ t.name }}</span>
                   </label>
                 {% endfor %}
               </div>
@@ -88,13 +110,13 @@
             {% endif %}
 
             {% if supports %}
-            <div class="form-group">
-              <label class="form-label">Поддержка</label>
-              <div style="max-height: 160px; overflow-y: auto; display: grid; gap: 0.5rem;">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">Поддержка</label>
+              <div class="max-h-40 overflow-y-auto space-y-2 pr-2">
                 {% for t in supports %}
-                  <label style="display: flex; align-items: center; font-size: 0.875rem; cursor: pointer;">
-                    <input type="checkbox" name="support" value="{{ t.slug }}" class="form-checkbox" {% if t.slug in selected_support %}checked{% endif %}>
-                    {{ t.name }}
+                  <label class="flex items-center gap-2 cursor-pointer m-0">
+                    <input type="checkbox" name="support" value="{{ t.slug }}" class="rounded border-slate-300 text-teal-600 focus:ring-teal-500" {% if t.slug in selected_support %}checked{% endif %}>
+                    <span class="text-sm text-slate-600">{{ t.name }}</span>
                   </label>
                 {% endfor %}
               </div>
@@ -102,139 +124,127 @@
             {% endif %}
 
             {% if languages %}
-            <div class="form-group">
-              <label class="form-label">Языки интерфейса</label>
-              <div style="max-height: 160px; overflow-y: auto; display: grid; gap: 0.5rem;">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">Языки интерфейса</label>
+              <div class="max-h-40 overflow-y-auto space-y-2 pr-2">
                 {% for t in languages %}
-                  <label style="display: flex; align-items: center; font-size: 0.875rem; cursor: pointer;">
-                    <input type="checkbox" name="language" value="{{ t.slug }}" class="form-checkbox" {% if t.slug in selected_language %}checked{% endif %}>
-                    {{ t.name }}
+                  <label class="flex items-center gap-2 cursor-pointer m-0">
+                    <input type="checkbox" name="language" value="{{ t.slug }}" class="rounded border-slate-300 text-teal-600 focus:ring-teal-500" {% if t.slug in selected_language %}checked{% endif %}>
+                    <span class="text-sm text-slate-600">{{ t.name }}</span>
                   </label>
                 {% endfor %}
               </div>
             </div>
             {% endif %}
-
-            <div class="form-group">
-              <label class="form-label">Сортировка</label>
-              <select name="sort" class="form-select">
-                <option value="">По умолчанию</option>
-                <option value="rating" {% if request.GET.sort == "rating" %}selected{% endif %}>По рейтингу</option>
-                <option value="name" {% if request.GET.sort == "name" %}selected{% endif %}>По названию</option>
-              </select>
-            </div>
-
-            <button type="submit" class="btn btn-primary" style="width: 100%;">Применить фильтры</button>
-          </form>
-        </div>
+         </div>
+         <div class="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4">
+           <a href="{{ canonical_url }}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors no-underline">Сбросить</a>
+           <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-xl transition-colors border-none cursor-pointer">Применить фильтры</button>
+         </div>
       </div>
+    </form>
+
+    <!-- Found text -->
+    <div class="mb-6 text-sm font-medium text-slate-500" data-aos="fade-up" data-aos-delay="200">
+      Найдено систем: {{ page_obj.paginator.count }}
     </div>
 
-    <!-- Products Grid -->
-    <div class="col-lg-9">
-      <header class="flex justify-between items-center mb-4" style="flex-wrap: wrap; gap: 1rem;">
-        <div>
-          <h1 style="font-size: 1.875rem; font-weight: 700; margin-bottom: 0.5rem;">{{ category.name }}</h1>
-          {% if category.description %}
-            <p class="text-muted mb-0">{{ category.description }}</p>
-          {% endif %}
-        </div>
-        <div class="text-muted">
-          <strong>{{ page_obj.paginator.count|intcomma }}</strong> систем(ы)
-        </div>
-      </header>
+    <!-- Results Grid -->
+    {% if page_obj.object_list %}
+       <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          {% for system in page_obj.object_list %}
+             <a href="{{ system.get_absolute_url }}" class="group flex flex-col h-full bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-all hover:-translate-y-1 no-underline cursor-pointer" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:'1' }}00">
+                
+                <div class="flex items-start justify-between mb-4">
+                  <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center text-white font-heading font-bold text-xl overflow-hidden shadow-sm border border-slate-100
+                      {% if system.id|divisibleby:3 %}bg-blue-600{% elif system.id|divisibleby:2 %}bg-emerald-500{% else %}bg-indigo-600{% endif %}">
+                      {% if system.logo %}
+                        <img src="{{ system.logo.url }}" alt="{{ system.name }}" class="w-full h-full object-cover">
+                      {% else %}
+                        {{ system.name|slice:":2"|upper }}
+                      {% endif %}
+                    </div>
+                    <div>
+                      <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+                        {{ system.get_top.name|default:category.name }}
+                      </span>
+                      <h3 class="text-lg font-heading font-bold text-slate-900 leading-tight m-0 group-hover:text-teal-600 transition-colors" itemprop="name">
+                        {{ system.name }}
+                      </h3>
+                    </div>
+                  </div>
+                  
+                  {% if system.rating > 0 %}
+                  <div class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md shrink-0">
+                    <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i>
+                    <span class="text-sm font-bold text-slate-700">{{ system.rating|default:"0.0" }}</span>
+                  </div>
+                  {% endif %}
+                </div>
 
-      {% if page_obj.object_list %}
-        <div class="row g-3 mb-4" itemscope itemtype="https://schema.org/ItemList">
-          <meta itemprop="name" content="{{ category.name }}">
-          <meta itemprop="numberOfItems" content="{{ page_obj.paginator.count }}">
-          {% for p in page_obj.object_list %}
-            <div class="col-md-6 col-xl-4" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
-              <meta itemprop="position" content="{{ page_obj.start_index|add:forloop.counter0 }}">
-              <meta itemprop="url" content="{{ request.scheme }}://{{ request.get_host }}{{ p.get_absolute_url }}">
-              <div class="card product-card">
-                <div class="product-card-header">
-                  <div class="product-logo">
-                    {% if p.logo %}
-                      <img src="{{ p.logo.url }}" alt="{{ p.name }}">
-                    {% else %}
-                      <img src="https://ui-avatars.com/api/?name={{ p.name|urlencode }}&size=64&background=1560BD&color=ffffff&bold=true" alt="{{ p.name }}">
+                <p class="text-sm text-slate-600 flex-grow mb-6 leading-relaxed m-0">
+                  {{ system.short_description|truncatechars:120 }}
+                </p>
+
+                <div class="flex flex-wrap items-center justify-between gap-2 mt-auto pt-4 border-t border-slate-100">
+                  <div class="flex flex-wrap gap-2">
+                    {% if system.free_plan %}
+                      <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wide uppercase bg-emerald-100 text-emerald-700">FREE</span>
+                    {% endif %}
+                    {% if system.trial_available %}
+                      <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wide uppercase bg-cyan-100 text-cyan-700">TRIAL</span>
+                    {% endif %}
+                    {% if not system.free_plan and not system.trial_available %}
+                      <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wide uppercase bg-slate-100 text-slate-600">PAID</span>
                     {% endif %}
                   </div>
-                  <div class="product-info">
-                    <a href="{{ p.get_absolute_url }}" class="product-name" itemprop="name">{{ p.name }}</a>
-                    <p class="product-description" itemprop="description">{{ p.short_description|truncatechars:100 }}</p>
-                    <div class="flex gap-2" style="flex-wrap: wrap;">
-                      {% if p.free_plan %}<span class="badge badge-success">FREE</span>{% endif %}
-                      {% if p.trial_available %}<span class="badge badge-info">TRIAL</span>{% endif %}
-                      {% if p.deployment_type %}<span class="badge badge-neutral">{{ p.get_deployment_type_display|truncatechars:15 }}</span>{% endif %}
-                    </div>
-                  </div>
+                  <span class="text-xs font-medium text-slate-400">
+                    {{ system.reviews_count|default:"0" }} отзывов
+                  </span>
                 </div>
-                <div class="product-meta">
-                  {% if p.rating > 0 %}
-                    <div class="product-rating">
-                      {% for i in "12345" %}
-                        <span class="rating-star {% if forloop.counter > p.rating %}empty{% endif %}">★</span>
-                      {% endfor %}
-                      <span>{{ p.rating }}</span>
-                    </div>
-                  {% endif %}
-                  <div class="flex gap-2" style="margin-left: auto;">
-                    <form method="post" action="{% url 'catalog:toggle_saved' p.id %}" style="display: inline;">
-                      {% csrf_token %}
-                      <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                      <button type="submit" class="btn btn-sm {% if p.id in saved_product_ids %}btn-primary{% else %}btn-secondary{% endif %}" style="padding: 0.25rem 0.75rem;" title="{% if p.id in saved_product_ids %}Убрать из сохранённых{% else %}Сохранить{% endif %}">
-                        <img src="{% static 'images/icons/bookmark.svg' %}" alt="" class="icon icon-sm">
-                      </button>
-                    </form>
-                    <form method="post" action="{% url 'catalog:toggle_compare' p.id %}" style="display: inline;">
-                      {% csrf_token %}
-                      <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                      <button type="submit" class="btn btn-sm {% if p.id in compare_product_ids %}btn-primary{% else %}btn-secondary{% endif %}" style="padding: 0.25rem 0.75rem;" title="{% if p.id in compare_product_ids %}Убрать из сравнения{% else %}Сравнить{% endif %}" {% if p.id not in compare_product_ids and compare_count >= max_compare %}disabled title="Добавлено максимум ({{ max_compare }}). Уберите одну на странице сравнения."{% endif %}>
-                        <img src="{% static 'images/icons/compare.svg' %}" alt="" class="icon icon-sm">
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </div>
+             </a>
           {% endfor %}
-        </div>
+       </div>
+       
+       <!-- Pagination -->
+       {% if page_obj.paginator.num_pages > 1 %}
+         <nav aria-label="Pagination" class="mt-8 mb-12">
+           <ul class="flex justify-center items-center gap-2 list-none p-0 m-0">
+             {% if page_obj.has_previous %}
+               <li>
+                 <a href="{% querystring request page=page_obj.previous_page_number %}" class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-teal-600 hover:border-teal-200 hover:bg-teal-50 transition-colors no-underline">
+                   <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                 </a>
+               </li>
+             {% endif %}
+             <li>
+               <span class="inline-flex items-center justify-center px-4 h-10 rounded-xl bg-slate-100 text-sm font-medium text-slate-600 border border-slate-200">
+                 Стр. {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+               </span>
+             </li>
+             {% if page_obj.has_next %}
+               <li>
+                 <a href="{% querystring request page=page_obj.next_page_number %}" class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-teal-600 hover:border-teal-200 hover:bg-teal-50 transition-colors no-underline">
+                   <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                 </a>
+               </li>
+             {% endif %}
+           </ul>
+         </nav>
+       {% endif %}
 
-        {% if page_obj.paginator.num_pages > 1 %}
-          <nav aria-label="Pagination">
-            <ul class="pagination justify-content-center" style="display: flex; gap: 0.5rem; list-style: none; padding: 0;">
-              {% if page_obj.has_previous %}
-                <li>
-                  <a href="{% querystring request page=page_obj.previous_page_number %}" class="btn btn-sm btn-secondary">Назад</a>
-                </li>
-              {% endif %}
-              <li>
-                <span class="btn btn-sm btn-secondary" style="pointer-events: none;">Стр. {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-              </li>
-              {% if page_obj.has_next %}
-                <li>
-                  <a href="{% querystring request page=page_obj.next_page_number %}" class="btn btn-sm btn-secondary">Вперёд</a>
-                </li>
-              {% endif %}
-            </ul>
-          </nav>
-        {% endif %}
-      {% else %}
-        <div class="card">
-          <div class="card-body" style="padding: 3rem; text-align: center;">
-            <img src="{% static 'images/icons/filter.svg' %}" alt="" class="icon" style="width: 48px; height: 48px; color: var(--gray-400); margin-bottom: 1rem;">
-            <p class="text-muted mb-0">По выбранным фильтрам ничего не найдено</p>
+    {% else %}
+       <!-- Empty State -->
+       <div class="text-center py-20 bg-white rounded-2xl border border-slate-200 shadow-sm" data-aos="fade-up" data-aos-delay="300">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-50 mb-4">
+             <i data-lucide="search" class="w-8 h-8 text-slate-400"></i>
           </div>
-        </div>
-      {% endif %}
+          <h3 class="text-xl font-heading font-bold text-slate-900 mb-2">Ничего не найдено</h3>
+          <p class="text-slate-500 m-0">Попробуйте изменить параметры поиска или фильтры</p>
+       </div>
+    {% endif %}
 
-      {% if popular_products %}
-        <div class="mt-4 pt-4" style="border-top: 1px solid var(--gray-200);">
-          {% include "catalog/includes/popular_products_card.html" with popular_products=popular_products title=popular_products_title %}
-        </div>
-      {% endif %}
-    </div>
   </div>
+</div>
 {% endblock %}
