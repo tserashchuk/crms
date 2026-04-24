@@ -12,8 +12,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind CSS (deferred to avoid render blocking) -->
+  <script defer src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       corePlugins: {
@@ -52,7 +52,7 @@
   </script>
 
   <!-- AOS Animations -->
-  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
   <style>
     /* New Design Utilities */
@@ -200,17 +200,23 @@
   </footer>
   
   <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
   
   <!-- AOS Animations JS -->
-  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/aos@2.3.1/dist/aos.js"></script>
   <script>
-    lucide.createIcons();
-    AOS.init({
-      once: true,
-      offset: 50,
-      duration: 500,
-      easing: 'ease-out-cubic',
+    window.addEventListener("DOMContentLoaded", function () {
+      if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
+      }
+      if (window.AOS && typeof window.AOS.init === "function") {
+        window.AOS.init({
+          once: true,
+          offset: 50,
+          duration: 500,
+          easing: "ease-out-cubic",
+        });
+      }
     });
   </script>
 </body>
