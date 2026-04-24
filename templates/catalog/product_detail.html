@@ -97,8 +97,8 @@
       <!-- Left Column (Content) -->
       <div class="flex-1 min-w-0">
         
-        <!-- About System -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm mb-8" data-aos="fade-up">
+        <!-- About System (якорь для AOS сайдбара — та же фаза анимации) -->
+        <div id="product-aos-anchor" class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm mb-8" data-aos="fade-up">
           <h2 class="text-2xl font-heading font-bold text-slate-900 mb-6 m-0">О системе</h2>
           <div class="prose max-w-none text-slate-600 leading-relaxed">
             {% if product.description %}
@@ -219,11 +219,11 @@
 
       </div>
 
-      <!-- Right Column (Sidebar) -->
-      <div class="w-full lg:w-80 shrink-0 flex flex-col gap-6">
+      <!-- Right Column (Sidebar): одна анима fade-up, триггер — как у блока «О системе») -->
+      <div class="w-full lg:w-80 shrink-0 flex flex-col gap-6" data-aos="fade-up" data-aos-anchor="#product-aos-anchor">
         
         <!-- Info Card -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm" data-aos="fade-left">
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
           <h3 class="text-lg font-heading font-bold text-slate-900 mb-6 m-0">Информация</h3>
           <div class="space-y-4">
             
@@ -267,7 +267,7 @@
         </div>
 
         <!-- Help Card -->
-        <div class="bg-slate-900 rounded-2xl p-6 shadow-sm text-white" data-aos="fade-left" data-aos-delay="100">
+        <div class="bg-slate-900 rounded-2xl p-6 shadow-sm text-white">
           <h3 class="text-lg font-heading font-bold mb-3 m-0">Нужна помощь с выбором?</h3>
           <p class="text-slate-400 text-sm leading-relaxed mb-6 m-0">
             Наши эксперты помогут подобрать оптимальную систему под задачи вашего бизнеса.
@@ -278,7 +278,7 @@
         </div>
 
         <!-- Integrator Expertise Card -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm" data-aos="fade-left" data-aos-delay="150">
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
           <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-teal-50 text-teal-700 text-[11px] font-semibold uppercase tracking-wider mb-3">
             <i data-lucide="badge-check" class="w-3.5 h-3.5"></i>
             Экспертный обзор
@@ -300,7 +300,7 @@
 
         <!-- Tags Card -->
         {% if tags_by_group %}
-        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm" data-aos="fade-left" data-aos-delay="200">
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
           <h3 class="text-lg font-heading font-bold text-slate-900 mb-4 m-0">Теги</h3>
           <div class="space-y-4">
             {% for group_label, tags in tags_by_group %}
@@ -318,7 +318,7 @@
         {% endif %}
 
         {% if product.documentation_url or product.support_url %}
-        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm" data-aos="fade-left" data-aos-delay="300">
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
           <h3 class="text-lg font-heading font-bold text-slate-900 mb-4 m-0">Ссылки</h3>
           <div class="space-y-3">
             {% if product.documentation_url %}
