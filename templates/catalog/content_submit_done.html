@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Материал принят — {{ block.super }}{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
+  <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-teal-100 text-teal-700 mb-6">
+    <i data-lucide="check" class="w-7 h-7"></i>
+  </div>
+  <h1 class="font-heading text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight m-0">
+    Материал принят
+  </h1>
+  <p class="mt-3 text-slate-600 text-sm leading-relaxed m-0">
+    Карточка сервиса отправлена на премодерацию. Укажите в отчёте на бирже контента этот код:
+  </p>
+  <p class="mt-6 font-mono text-xl sm:text-2xl font-bold text-teal-700 tracking-wide select-all break-all m-0" id="public-code">{{ public_code }}</p>
+  <button type="button" id="copy-code" class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer">
+    <i data-lucide="copy" class="w-4 h-4"></i>
+    Скопировать код
+  </button>
+  <p class="mt-10 text-xs text-slate-400 m-0">Закройте страницу после копирования. Ссылку из задания больше не пересылайте третьим лицам.</p>
+</div>
+<script>
+  document.getElementById("copy-code")?.addEventListener("click", function () {
+    var t = document.getElementById("public-code");
+    if (!t) return;
+    navigator.clipboard.writeText(t.textContent.trim()).then(function () {
+      alert("Код скопирован.");
+    });
+  });
+</script>
+{% endblock %}

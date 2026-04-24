@@ -2,11 +2,11 @@ from django.conf import settings
 from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import path
-from django.views.decorators.http import require_POST
+from django.utils.html import format_html
 from django.views.decorators.http import require_http_methods
 
 from .deepseek import fetch_product_data
-from .models import Category, Product, Review, Tag
+from .models import Category, ContentOrder, ContentSubmission, Product, Review, Tag
 
 
 @admin.register(Category)
@@ -97,4 +97,59 @@ class ReviewAdmin(admin.ModelAdmin):
     list_filter = ("is_published", "rating", "created_at")
     search_fields = ("author_name", "text", "product__name")
     ordering = ("-created_at",)
+
+
+@admin.register(ContentOrder)
+class ContentOrderAdmin(admin.ModelAdmin):
+    list_display = ("title", "is_active", "max_submissions", "submissions_count", "submit_link", "created_at")
+    list_filter = ("is_active",)
+    search_fields = ("title", "token", "internal_note")
+    readonly_fields = ("token", "submit_link", "created_at", "updated_at")
+    fields = ("title", "internal_note", "is_active", "max_submissions", "token", "submit_link", "created_at", "updated_at")
+
+    @admin.display(description="Заявок")
+    def submissions_count(self, obj: ContentOrder) -> int:
+        return obj.submissions.count()
+
+    @admin.display(description="Ссылка для биржи")
+    def submit_link(self, obj: ContentOrder) -> str:
+        if not obj.pk:
+            return "—"
+        path = obj.get_submit_path()
+        return format_html('<a href="{}" target="_blank" rel="noopener">{}</a>', path, path)
+
+
+@admin.register(ContentSubmission)
+class ContentSubmissionAdmin(admin.ModelAdmin):
+    list_display = ("public_code", "submission_name", "order", "status", "catalog_product_link", "submitted_at", "ip_address")
+    list_filter = ("status", "submitted_at")
+    search_fields = ("public_code", "executor_comment", "order__title")
+    readonly_fields = ("public_code", "submitted_at", "ip_address", "product_data", "created_product")
+    ordering = ("-submitted_at",)
+    raw_id_fields = ("order", "created_product")
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": ("order", "public_code", "status", "created_product", "submitted_at", "ip_address"),
+                "description": "При смене статуса на «Одобрено» и сохранении заявки автоматически создаётся сервис в каталоге (если ещё не создан). "
+                "Для уже одобрённых ранее заявок без сервиса выполните: python manage.py sync_approved_submissions",
+            },
+        ),
+        ("Карточка сервиса (как придёт в каталог после модерации)", {"fields": ("product_data", "submitted_logo", "attachment")}),
+        ("Исполнитель", {"fields": ("executor_comment",)}),
+        ("Модерация", {"fields": ("moderator_note",)}),
+    )
+
+    @admin.display(description="Название в заявке")
+    def submission_name(self, obj: ContentSubmission) -> str:
+        return (obj.product_data or {}).get("name") or "—"
+
+    @admin.display(description="В каталоге")
+    def catalog_product_link(self, obj: ContentSubmission) -> str:
+        if not obj.created_product_id:
+            return "—"
+        p = obj.created_product
+        url = p.get_absolute_url()
+        return format_html('<a href="{}" target="_blank" rel="noopener">{}</a>', url, p.name)
 

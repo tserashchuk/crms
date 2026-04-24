@@ -1,18 +1,21 @@
 from __future__ import annotations
 
+import re
 from decimal import Decimal
 
+from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_http_methods
 
 import json
 
 from .context_processors import MAX_COMPARE, SESSION_COMPARE, SESSION_SAVED
-from .forms import ReviewForm
-from .models import Category, Product, Review, Tag
+from .forms import ContentSubmissionForm, ReviewForm
+from .models import Category, ContentOrder, ContentSubmission, Product, Review, Tag
 from .seo import breadcrumb_list, item_list_ld, organization_ld, review_list_ld, software_application_ld, website_ld
 from .utils import descendant_category_ids, parse_multi
 
@@ -21,6 +24,145 @@ PER_PAGE = 12
 CROSSLINK_POPULAR_LIMIT = 8
 SITE_NAME = "CRM Каталог"
 DEFAULT_META_DESCRIPTION = "Каталог CRM, CDP и ERP систем. Сравнение возможностей, отзывы пользователей и подбор решений для бизнеса."
+
+# Лимиты отправки формы «материал с биржи»
+SUBMIT_RL_IP_KEY = "content_submit:ip:{ip}"
+SUBMIT_RL_ORDER_KEY = "content_submit:order:{order_id}"
+SUBMIT_RL_IP_LIMIT = 30  # за окно
+SUBMIT_RL_IP_WINDOW = 3600
+SUBMIT_RL_ORDER_LIMIT = 10
+SUBMIT_RL_ORDER_WINDOW = 3600
+
+_PUBLIC_CODE_RE = re.compile(r"^SUB-[0-9A-F]{8,24}$")
+
+
+def _client_ip(request: HttpRequest) -> str:
+    xff = (request.META.get("HTTP_X_FORWARDED_FOR") or "").strip()
+    if xff:
+        return xff.split(",")[0].strip()[:45]
+    return (request.META.get("REMOTE_ADDR") or "")[:45]
+
+
+def _rate_limit_incr(key: str, limit: int, window_sec: int) -> bool:
+    """
+    Увеличивает счётчик по ключу. Возвращает True, если после шага счётчик ≤ limit.
+    При ошибке кэша не блокируем отправку.
+    """
+    try:
+        n = cache.get(key)
+        if n is None:
+            cache.set(key, 1, window_sec)
+            return True
+        n_int = int(n)
+        if n_int >= limit:
+            return False
+        cache.incr(key)
+        return True
+    except Exception:
+        return True
+
+
+@require_http_methods(["GET", "POST"])
+def content_submit(request: HttpRequest, token: str) -> HttpResponse:
+    order = ContentOrder.objects.filter(token=token, is_active=True).first()
+    if not order:
+        raise Http404
+
+    ip = _client_ip(request)
+
+    count = order.submissions.count()
+    if count >= order.max_submissions:
+        return render(
+            request,
+            "catalog/content_submit.html",
+            {
+                "order": order,
+                "form": None,
+                "rate_limited": False,
+                "submissions_closed": True,
+                "meta_description": "Лимит отправок по этой ссылке исчерпан.",
+                "canonical_url": reverse("catalog:content_submit", kwargs={"token": token}),
+            },
+        )
+
+    if request.method == "POST":
+        form = ContentSubmissionForm(request.POST, request.FILES)
+        if form.is_valid():
+            if not _rate_limit_incr(
+                SUBMIT_RL_IP_KEY.format(ip=ip or "unknown"),
+                SUBMIT_RL_IP_LIMIT,
+                SUBMIT_RL_IP_WINDOW,
+            ):
+                return render(
+                    request,
+                    "catalog/content_submit.html",
+                    {
+                        "order": order,
+                        "form": form,
+                        "rate_limited": True,
+                        "submissions_closed": False,
+                        "meta_description": "Слишком много успешных отправок. Попробуйте позже.",
+                        "canonical_url": reverse("catalog:content_submit", kwargs={"token": token}),
+                    },
+                    status=429,
+                )
+            if not _rate_limit_incr(
+                SUBMIT_RL_ORDER_KEY.format(order_id=order.pk),
+                SUBMIT_RL_ORDER_LIMIT,
+                SUBMIT_RL_ORDER_WINDOW,
+            ):
+                return render(
+                    request,
+                    "catalog/content_submit.html",
+                    {
+                        "order": order,
+                        "form": form,
+                        "rate_limited": True,
+                        "submissions_closed": False,
+                        "meta_description": "Слишком частые успешные отправки по этому заказу. Подождите час.",
+                        "canonical_url": reverse("catalog:content_submit", kwargs={"token": token}),
+                    },
+                    status=429,
+                )
+            sub = ContentSubmission.objects.create(
+                order=order,
+                product_data=form.to_product_data(),
+                executor_comment=form.cleaned_data.get("executor_comment") or "",
+                submitted_logo=form.cleaned_data.get("submitted_logo") or None,
+                attachment=form.cleaned_data.get("attachment") or None,
+                ip_address=ip,
+            )
+            return redirect(f"{reverse('catalog:content_submit_done')}?code={sub.public_code}")
+    else:
+        form = ContentSubmissionForm()
+
+    return render(
+        request,
+        "catalog/content_submit.html",
+        {
+            "order": order,
+            "form": form,
+            "rate_limited": False,
+            "submissions_closed": False,
+            "meta_description": "Отправка материала по заказу. Материал попадёт на премодерацию.",
+            "canonical_url": reverse("catalog:content_submit", kwargs={"token": token}),
+        },
+    )
+
+
+def content_submit_done(request: HttpRequest) -> HttpResponse:
+    code = (request.GET.get("code") or "").strip().upper()
+    if not code or not _PUBLIC_CODE_RE.match(code):
+        raise Http404
+    return render(
+        request,
+        "catalog/content_submit_done.html",
+        {
+            "public_code": code,
+            "meta_description": "Материал принят на премодерацию.",
+            "canonical_url": reverse("catalog:content_submit_done"),
+        },
+    )
 
 
 def _popular_products(category_ids: list[int] | None = None, exclude_product_id: int | None = None):

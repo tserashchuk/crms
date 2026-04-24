@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Карточка сервиса — отправка — {{ block.super }}{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <div class="mb-8">
+    <h1 class="font-heading text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight m-0">
+      Заполнение карточки сервиса
+    </h1>
+    <p class="mt-2 text-slate-600 text-sm leading-relaxed m-0">
+      Поля совпадают с карточкой в каталоге. Текст — без HTML. После отправки заявка уходит на <strong>премодерацию</strong>.
+      Код для отчёта на бирже будет на следующей странице.
+    </p>
+    {% if order.title %}
+    <p class="mt-3 text-sm text-slate-500 m-0"><span class="font-medium text-slate-700">Заказ:</span> {{ order.title }}</p>
+    {% endif %}
+  </div>
+
+  {% if rate_limited %}
+  <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+    Слишком много успешных отправок с вашего адреса или по этому заказу. Подождите около часа и попробуйте снова.
+  </div>
+  {% elif submissions_closed %}
+  <div class="rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-800">
+    По этой ссылке больше не принимаются заявки (лимит или заказ закрыт). Свяжитесь с заказчиком.
+  </div>
+  {% elif form %}
+  <form method="post" enctype="multipart/form-data" class="space-y-10">
+    {% csrf_token %}
+    {{ form.website }}
+
+    {% if form.non_field_errors %}
+    <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800">
+      {% for e in form.non_field_errors %}<p class="m-0">{{ e }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    <fieldset class="border border-slate-200 rounded-xl p-5 sm:p-6 bg-white space-y-4 m-0">
+      <legend class="font-heading text-sm font-semibold text-slate-900 px-2">Основное</legend>
+      {% with f=form.name %}<div><label for="{{ f.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ f.label }}</label>{{ f }}{% if f.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+      {% with f=form.slug %}<div><label for="{{ f.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ f.label }}</label>{{ f }}{% if f.help_text %}<p class="mt-1 text-xs text-slate-500 m-0">{{ f.help_text }}</p>{% endif %}{% if f.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+      {% with f=form.short_description %}<div><label for="{{ f.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ f.label }}</label>{{ f }}{% if f.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+      {% with f=form.category %}<div><label for="{{ f.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ f.label }}</label>{{ f }}{% if f.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+      {% with f=form.submitted_logo %}<div><label for="{{ f.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ f.label }}</label>{{ f }}{% if f.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+    </fieldset>
+
+    <fieldset class="border border-slate-200 rounded-xl p-5 sm:p-6 bg-white space-y-4 m-0">
+      <legend class="font-heading text-sm font-semibold text-slate-900 px-2">Ссылки</legend>
+      {% with f=form.website_url %}<div><label for="{{ f.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ f.label }}</label>{{ f }}{% if f.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+      {% with f=form.documentation_url %}<div><label for="{{ f.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ f.label }}</label>{{ f }}{% if f.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+      {% with f=form.support_url %}<div><label for="{{ f.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ f.label }}</label>{{ f }}{% if f.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+    </fieldset>
+
+    <fieldset class="border border-slate-200 rounded-xl p-5 sm:p-6 bg-white space-y-4 m-0">
+      <legend class="font-heading text-sm font-semibold text-slate-900 px-2">Описание</legend>
+      {% with f=form.description %}<div><label for="{{ f.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ f.label }}</label>{{ f }}{% if f.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+      {% with f=form.extended_description %}<div><label for="{{ f.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ f.label }}</label>{{ f }}{% if f.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+      {% with f=form.key_features %}<div><label for="{{ f.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ f.label }}</label>{{ f }}{% if f.help_text %}<p class="mt-1 text-xs text-slate-500 m-0">{{ f.help_text }}</p>{% endif %}{% if f.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+      {% with f=form.advantages %}<div><label for="{{ f.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ f.label }}</label>{{ f }}{% if f.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+      {% with f=form.disadvantages %}<div><label for="{{ f.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ f.label }}</label>{{ f }}{% if f.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+    </fieldset>
+
+    <fieldset class="border border-slate-200 rounded-xl p-5 sm:p-6 bg-white space-y-4 m-0">
+      <legend class="font-heading text-sm font-semibold text-slate-900 px-2">Характеристики</legend>
+      {% with f=form.deployment_type %}<div><label for="{{ f.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ f.label }}</label>{{ f }}{% if f.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+      {% with f=form.business_size %}<div><label for="{{ f.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ f.label }}</label>{{ f }}{% if f.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+      {% with f=form.support_24_7 %}<div class="flex items-center gap-2">{{ f }}<label for="{{ f.id_for_label }}" class="text-sm font-medium text-slate-700 m-0">{{ f.label }}</label>{% if f.errors %}<p class="text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+      <div>
+        <label for="{{ form.tags.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ form.tags.label }}</label>
+        <p class="text-xs text-slate-500 m-0 mb-1">Удерживайте Ctrl (Cmd) для нескольких тегов.</p>
+        {{ form.tags }}
+        {% if form.tags.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ form.tags.errors.0 }}</p>{% endif %}
+      </div>
+    </fieldset>
+
+    <fieldset class="border border-slate-200 rounded-xl p-5 sm:p-6 bg-white space-y-4 m-0">
+      <legend class="font-heading text-sm font-semibold text-slate-900 px-2">Цены и пробный период</legend>
+      {% with f=form.free_plan %}<div class="flex items-center gap-2">{{ f }}<label for="{{ f.id_for_label }}" class="text-sm font-medium text-slate-700 m-0">{{ f.label }}</label>{% if f.errors %}<p class="text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+      {% with f=form.trial_available %}<div class="flex items-center gap-2">{{ f }}<label for="{{ f.id_for_label }}" class="text-sm font-medium text-slate-700 m-0">{{ f.label }}</label>{% if f.errors %}<p class="text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+      {% with f=form.pricing_model %}<div><label for="{{ f.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ f.label }}</label>{{ f }}{% if f.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+      {% with f=form.pricing_details %}<div><label for="{{ f.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ f.label }}</label>{{ f }}{% if f.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+    </fieldset>
+
+    <fieldset class="border border-slate-200 rounded-xl p-5 sm:p-6 bg-white space-y-4 m-0">
+      <legend class="font-heading text-sm font-semibold text-slate-900 px-2">Актуальность и комментарий</legend>
+      {% with f=form.updated_info_at %}<div><label for="{{ f.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ f.label }}</label>{{ f }}{% if f.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+      {% with f=form.executor_comment %}<div><label for="{{ f.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ f.label }}</label>{{ f }}{% if f.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+      {% with f=form.attachment %}<div><label for="{{ f.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ f.label }}</label>{{ f }}<p class="mt-1 text-xs text-slate-500 m-0">Необязательно. До 5 МБ.</p>{% if f.errors %}<p class="mt-1 text-sm text-red-600 m-0">{{ f.errors.0 }}</p>{% endif %}</div>{% endwith %}
+    </fieldset>
+
+    <button type="submit" class="w-full sm:w-auto inline-flex justify-center items-center gap-2 px-6 py-3 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-colors border-0 cursor-pointer">
+      Отправить на модерацию
+    </button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

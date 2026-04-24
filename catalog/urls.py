@@ -7,6 +7,8 @@ app_name = "catalog"
 
 urlpatterns = [
     path("", views.home, name="home"),
+    path("submit/done/", views.content_submit_done, name="content_submit_done"),
+    path("submit/<slug:token>/", views.content_submit, name="content_submit"),
     path("saved/", views.saved_list, name="saved_list"),
     path("saved/clear/", views.clear_saved, name="clear_saved"),
     path("compare/", views.compare_list, name="compare_list"),

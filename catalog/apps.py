@@ -6,3 +6,6 @@ class CatalogConfig(AppConfig):
     name = "catalog"
     verbose_name = "Каталог"
 
+    def ready(self) -> None:
+        import catalog.signals  # noqa: F401
+

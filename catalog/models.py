@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import secrets
 from datetime import date
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import FileExtensionValidator, MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Avg, Count
 from django.db.models.signals import post_delete, post_save
@@ -239,6 +240,122 @@ class Review(models.Model):
         return f"{self.product.name}: {self.rating}★ от {self.author_name}"
 
 
+class ContentOrder(models.Model):
+    """
+    Заказ с биржи контента: секретная ссылка /submit/<token>/ для исполнителя.
+    """
+
+    title = models.CharField("Название (для себя)", max_length=200)
+    internal_note = models.TextField("Внутренняя заметка", blank=True)
+    token = models.CharField("Секретный токен в ссылке", max_length=64, unique=True, editable=False, db_index=True)
+    is_active = models.BooleanField("Приём материалов открыт", default=True)
+    max_submissions = models.PositiveSmallIntegerField(
+        "Макс. число отправок по ссылке",
+        default=10,
+        help_text="После лимита форма перестанет принимать новые заявки.",
+    )
+    created_at = models.DateTimeField("Создано", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлено", auto_now=True)
+
+    class Meta:
+        verbose_name = "Заказ контента (ссылка для биржи)"
+        verbose_name_plural = "Заказы контента (ссылки для биржи)"
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return self.title
+
+    def save(self, *args, **kwargs) -> None:
+        if not self.token:
+            self.token = secrets.token_urlsafe(32)
+        super().save(*args, **kwargs)
+
+    def get_submit_path(self) -> str:
+        return reverse("catalog:content_submit", kwargs={"token": self.token})
+
+
+class ContentSubmission(models.Model):
+    """Материал от исполнителя — по умолчанию на премодерации."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "На премодерации"
+        APPROVED = "approved", "Одобрено"
+        REJECTED = "rejected", "Отклонено"
+
+    order = models.ForeignKey(
+        ContentOrder,
+        verbose_name="Заказ",
+        related_name="submissions",
+        on_delete=models.CASCADE,
+    )
+    public_code = models.CharField(
+        "Код для отчёта на бирже",
+        max_length=24,
+        unique=True,
+        editable=False,
+        db_index=True,
+    )
+    product_data = models.JSONField(
+        "Данные карточки (поля как у сервиса)",
+        default=dict,
+        blank=True,
+        help_text="Структура совпадает с полями модели Product (без рейтинга, SEO-источника и публикации).",
+    )
+    submitted_logo = models.ImageField(
+        "Логотип сервиса",
+        upload_to="content_submissions/logos/%Y/%m/",
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(allowed_extensions=["png", "jpg", "jpeg", "webp", "gif"])],
+    )
+    executor_comment = models.CharField("Комментарий исполнителя", max_length=500, blank=True)
+    attachment = models.FileField(
+        "Доп. файл (необязательно)",
+        upload_to="content_submissions/%Y/%m/",
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(allowed_extensions=["pdf", "docx", "txt", "zip", "md"])],
+    )
+    status = models.CharField(
+        "Статус модерации",
+        max_length=16,
+        choices=Status.choices,
+        default=Status.PENDING,
+        db_index=True,
+    )
+    created_product = models.ForeignKey(
+        "Product",
+        verbose_name="Созданный сервис в каталоге",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    moderator_note = models.TextField("Заметка модератора", blank=True)
+    submitted_at = models.DateTimeField("Отправлено", auto_now_add=True)
+    ip_address = models.CharField("IP", max_length=45, blank=True)
+
+    class Meta:
+        verbose_name = "Заявка с материалом"
+        verbose_name_plural = "Заявки с материалами (премодерация)"
+        ordering = ["-submitted_at"]
+
+    def __str__(self) -> str:
+        name = (self.product_data or {}).get("name") or "без названия"
+        return f"{self.public_code} — {name}"
+
+    def save(self, *args, **kwargs) -> None:
+        if not self.public_code:
+            for _ in range(50):
+                code = f"SUB-{secrets.token_hex(4).upper()}"
+                if not ContentSubmission.objects.filter(public_code=code).exists():
+                    self.public_code = code
+                    break
+            else:  # pragma: no cover — крайне маловероятно
+                self.public_code = f"SUB-{secrets.token_hex(8).upper()}"
+        super().save(*args, **kwargs)
+
+
 def _update_product_review_stats(product_id: int) -> None:
     """Пересчитывает rating и reviews_count у продукта по опубликованным отзывам."""
     stats = (
@@ -259,4 +376,3 @@ def _review_save_update_product_stats(sender, instance: Review, **kwargs) -> Non
 @receiver(post_delete, sender=Review)
 def _review_delete_update_product_stats(sender, instance: Review, **kwargs) -> None:
     _update_product_review_stats(instance.product_id)
-
